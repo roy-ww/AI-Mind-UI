@@ -30,8 +30,27 @@ svg.dragging { cursor: grabbing; }
 .node-group { cursor: default; }
 .node-rect { fill: var(--node); stroke: var(--node-border); stroke-width: 1; rx: 8; ry: 8; transition: fill 0.15s ease; }
 .node-group:hover .node-rect { fill: var(--node-hover); }
-.node-title { font-size: 14px; font-weight: 700; fill: var(--text); dominant-baseline: hanging; }
+.node-title { font-size: 18px; font-weight: 700; fill: var(--text); dominant-baseline: hanging; }
 .node-body { font-size: 12px; fill: var(--muted); dominant-baseline: hanging; line-height: 1.25; }
+.node-subtitle { font-size: 12px; font-weight: 700; fill: var(--text); dominant-baseline: hanging; }
+.node-paragraph { font-size: 12px; fill: var(--muted); dominant-baseline: hanging; line-height: 1.25; }
 .node-badge { font-size: 11px; fill: var(--muted); dominant-baseline: middle; cursor: pointer; -webkit-user-select: none; user-select: none; }
+.node-question-btn { 
+  font-size: 10px; 
+  fill: var(--primary); 
+  dominant-baseline: middle; 
+  cursor: pointer; 
+  -webkit-user-select: none; 
+  user-select: none; 
+  opacity: 0; 
+  transition: opacity 0.2s ease;
+  text-anchor: middle;
+}
+.node-group:hover .node-question-btn { 
+  opacity: 1; 
+}
+.node-question-btn:hover { 
+  fill: var(--accent); 
+}
 .link { stroke: var(--link); stroke-opacity: 0.7; stroke-width: 1.25; fill: none; }
 .legend { position: absolute; right: 12px; top: 12px; background: rgba(23,27,46,0.9); border: 1px solid #2e365e; padding: 8px 10px; border-radius: 8px; font-size: 12px; color: var(--muted); }

@@ -1,15 +1,15 @@
 const CONFIG = {
   levelGap: 120,
-  baseNodeWidth: 220,
+  baseNodeWidth: 420,
   baseNodeHeight: 40,
   siblingGap: 22,
   paddingTop: 24,
   paddingLeft: 24,
   nodePaddingX: 12,
   nodePaddingY: 10,
-  titleBodyGap: 6,
-  titleLineHeight: 20,
-  bodyLineHeight: 16,
+  titleBodyGap: 20,
+  titleLineHeight: 15,
+  bodyLineHeight: 10,
   minNodeHeight: 36,
   minCollapsedHeight: 28,
   fontFamily: "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
@@ -64,13 +64,56 @@ function wrapParagraph(text, maxWidth) {
   }
 }
 
-function wrapBodyText(body, innerWidth) {
-  const paragraphs = (body || "").split("\n");
-  const allLines = [];
-  for (let i = 0; i < paragraphs.length; i++) {
-    const p = paragraphs[i]; const lines = wrapParagraph(p, innerWidth); allLines.push(...lines); if (i !== paragraphs.length - 1) allLines.push("");
+function parseBodyContent(body) {
+  if (!body) return [];
+  
+  const lines = body.split("\n");
+  const content = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line === "") {
+      content.push({ type: "empty", text: "" });
+    } else if (line.startsWith("##")) {
+      // 子标题：以 ## 开头
+      content.push({ type: "subtitle", text: line.substring(2).trim() });
+    } else if (line.startsWith("#")) {
+      // 子标题：以 # 开头
+      content.push({ type: "subtitle", text: line.substring(1).trim() });
+    } else {
+      // 普通段落
+      content.push({ type: "paragraph", text: line });
+    }
   }
-  while (allLines.length > 0 && allLines[allLines.length - 1] === "") allLines.pop();
+  
+  return content;
+}
+
+function wrapBodyText(body, innerWidth) {
+  const content = parseBodyContent(body);
+  const allLines = [];
+  
+  for (let i = 0; i < content.length; i++) {
+    const item = content[i];
+    if (item.type === "empty") {
+      allLines.push({ type: "empty", text: "" });
+    } else {
+      const lines = wrapParagraph(item.text, innerWidth);
+      for (let j = 0; j < lines.length; j++) {
+        allLines.push({ type: item.type, text: lines[j] });
+      }
+      // 在非空内容后添加空行（除了最后一个）
+      if (i < content.length - 1 && item.type !== "empty") {
+        allLines.push({ type: "empty", text: "" });
+      }
+    }
+  }
+  
+  // 移除末尾的空行
+  while (allLines.length > 0 && allLines[allLines.length - 1].type === "empty") {
+    allLines.pop();
+  }
+  
   return allLines;
 }
 
@@ -78,32 +121,36 @@ function makeNode(id, title, body = "", children = [], height) {
   return { id, title, body, children, collapsed: false, width: CONFIG.baseNodeWidth, height: height ?? undefined, x: 0, y: 0, subtreeHeight: 0, _wrappedBodyLines: undefined };
 }
 
+function generateUniqueId() {
+  return 'node_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
 function buildSampleData() {
   return makeNode("root", "产品规划", "目标：清晰战略与节奏，确保可持续交付。\n覆盖市场-研发-增长全链路。", [
-    makeNode("a", "市场洞察", "用户画像、痛点聚合、需求优先级。通过定性与定量结合形成决策依据。", [
-      makeNode("a1", "用户调研", "访谈 N=20；问卷 N=300。核心诉求、流失原因与替代方案偏好。"),
-      makeNode("a2", "竞品分析", "功能覆盖度、定价、渠道、增长机制与差异化定位。", [
-        makeNode("a21", "功能矩阵", "必选/可选能力映射，找差距并形成跟进计划。"),
-        makeNode("a22", "价格策略", "分层定价（免费/专业/企业），试用期与转化路径设计。"),
-        makeNode("a23", "渠道策略", "SEO、内容、合作、口碑循环，构建可复用增长资产。")
+    makeNode("a", "市场洞察", "# 核心目标\n用户画像、痛点聚合、需求优先级。\n\n## 研究方法\n通过定性与定量结合形成决策依据。\n\n## 关键指标\n用户满意度、市场占有率、竞品对比。", [
+      makeNode("a1", "用户调研", "# 调研计划\n访谈 N=20；问卷 N=300。\n\n## 核心发现\n核心诉求、流失原因与替代方案偏好。\n\n## 下一步行动\n基于调研结果优化产品功能。"),
+      makeNode("a2", "竞品分析", "# 分析维度\n功能覆盖度、定价、渠道、增长机制与差异化定位。", [
+        makeNode("a21", "功能矩阵", "# 功能分类\n必选/可选能力映射，找差距并形成跟进计划。\n\n## 优先级排序\n根据用户价值和实现难度排序。"),
+        makeNode("a22", "价格策略", "# 定价模式\n分层定价（免费/专业/企业），试用期与转化路径设计。\n\n## 价格测试\nA/B测试不同价格点的转化率。"),
+        makeNode("a23", "渠道策略", "# 渠道布局\nSEO、内容、合作、口碑循环，构建可复用增长资产。\n\n## 渠道效果\n跟踪各渠道的获客成本和转化率。")
       ]),
     ]),
-    makeNode("b", "路线图", "将目标拆解为季度节奏，纳入风险与缓冲，保证节拍不失真。", [
-      makeNode("b1", "Q1", "MVP 收敛与首批种子用户小规模试用。", [
-        makeNode("b11", "MVP 定义", "可用、可测、可增长的最小集合，确保闭环可验证。"),
-        makeNode("b12", "可用性测试", "任务完成率≥80%，主流程<3 步，关键指标显著提升。")
+    makeNode("b", "路线图", "# 规划原则\n将目标拆解为季度节奏，纳入风险与缓冲，保证节拍不失真。\n\n## 里程碑\n每个季度设定关键里程碑和验收标准。", [
+      makeNode("b1", "Q1", "# 核心目标\nMVP 收敛与首批种子用户小规模试用。\n\n## 关键任务\n产品功能完善、用户反馈收集、数据验证。", [
+        makeNode("b11", "MVP 定义", "# 定义标准\n可用、可测、可增长的最小集合，确保闭环可验证。\n\n## 功能清单\n核心功能列表和优先级排序。"),
+        makeNode("b12", "可用性测试", "# 测试目标\n任务完成率≥80%，主流程<3 步，关键指标显著提升。\n\n## 测试计划\n用户测试流程和评估标准。")
       ]),
-      makeNode("b2", "Q2", "支付/增长闭环，围绕留存打造价值回访。", [
-        makeNode("b21", "支付整合", "Apple/Stripe，订单/退款/对账与税务合规 handlingSuperLongEnglishWordWithoutAnySpacesToTestHardWrapAndEnsureWeBreakCorrectly")
+      makeNode("b2", "Q2", "# 重点方向\n支付/增长闭环，围绕留存打造价值回访。\n\n## 增长策略\n用户获取、激活、留存的全链路优化。", [
+        makeNode("b21", "支付整合", "# 技术方案\nApple/Stripe，订单/退款/对账与税务合规\n\n## 安全考虑\n数据加密、PCI合规、风险控制。")
       ]),
-      makeNode("b3", "Q3", "生态与合作，探索平台化能力与伙伴共赢。")
+      makeNode("b3", "Q3", "# 战略目标\n生态与合作，探索平台化能力与伙伴共赢。\n\n## 合作方向\n技术合作、渠道合作、生态建设。")
     ]),
-    makeNode("c", "交付与增长", "发布、稳定性、飞轮：获取-激活-留存-变现-传播，形成正反馈。", [
-      makeNode("c1", "上线准备", "发布清单、监控、回滚脚本；预案演练与演习复盘。"),
-      makeNode("c2", "监控预警", "SLA、告警阈值、看板：问题可观测、可定位、可恢复。"),
-      makeNode("c3", "增长循环", "实验平台与指标体系，快速迭代并持续复盘。", [
-        makeNode("c31", "A/B 实验", "注册转化、首日留存，样本量与显著性控制。"),
-        makeNode("c32", "留存提升", "触达/激励/价值回访，基于分层用户画像制定策略。")
+    makeNode("c", "交付与增长", "# 核心策略\n发布、稳定性、飞轮：获取-激活-留存-变现-传播，形成正反馈。\n\n## 关键指标\n用户增长、留存率、收入增长、用户满意度。", [
+      makeNode("c1", "上线准备", "# 发布清单\n发布清单、监控、回滚脚本；预案演练与演习复盘。\n\n## 风险控制\n应急预案、回滚策略、监控告警。"),
+      makeNode("c2", "监控预警", "# 监控体系\nSLA、告警阈值、看板：问题可观测、可定位、可恢复。\n\n## 告警策略\n分级告警、自动恢复、人工介入。"),
+      makeNode("c3", "增长循环", "# 增长引擎\n实验平台与指标体系，快速迭代并持续复盘。\n\n## 数据驱动\n基于数据决策，持续优化产品体验。", [
+        makeNode("c31", "A/B 实验", "# 实验设计\n注册转化、首日留存，样本量与显著性控制。\n\n## 实验流程\n假设提出、实验设计、结果分析、决策执行。"),
+        makeNode("c32", "留存提升", "# 留存策略\n触达/激励/价值回访，基于分层用户画像制定策略。\n\n## 用户分层\n新用户、活跃用户、流失用户的不同策略。")
       ])
     ])
   ]);
@@ -191,11 +238,41 @@ function render(svg, root) {
 
     const innerWidth = Math.max(20, (n.width || CONFIG.baseNodeWidth) - CONFIG.nodePaddingX * 2);
     const wrapped = n._wrappedBodyLines || wrapBodyText(n.body, innerWidth);
-    if (wrapped.length > 0) { let y = CONFIG.nodePaddingY + CONFIG.titleLineHeight + CONFIG.titleBodyGap; for (let i = 0; i < wrapped.length; i++) { const line = wrapped[i]; const t = document.createElementNS("http://www.w3.org/2000/svg", "text"); t.setAttribute("class", "node-body"); t.setAttribute("x", String(CONFIG.nodePaddingX)); t.setAttribute("y", String(y)); t.textContent = line; g.appendChild(t); y += CONFIG.bodyLineHeight; } }
+    if (wrapped.length > 0) { 
+      let y = CONFIG.nodePaddingY + CONFIG.titleLineHeight + CONFIG.titleBodyGap; 
+      for (let i = 0; i < wrapped.length; i++) { 
+        const line = wrapped[i]; 
+        if (line.type === "empty") {
+          y += CONFIG.bodyLineHeight;
+          continue;
+        }
+        const t = document.createElementNS("http://www.w3.org/2000/svg", "text"); 
+        t.setAttribute("class", line.type === "subtitle" ? "node-subtitle" : "node-paragraph"); 
+        t.setAttribute("x", String(CONFIG.nodePaddingX)); 
+        t.setAttribute("y", String(y)); 
+        t.textContent = line.text; 
+        g.appendChild(t); 
+        y += CONFIG.bodyLineHeight; 
+      } 
+    }
 
     if ((n._originalChildren && n._originalChildren.length > 0) || (n.children && n.children.length > 0)) {
       const badge = document.createElementNS("http://www.w3.org/2000/svg", "text"); badge.setAttribute("class", "node-badge"); badge.setAttribute("x", String(n.width - 8)); badge.setAttribute("y", String(n.height / 2)); badge.setAttribute("text-anchor", "end"); badge.textContent = n.collapsed ? "+" : "−"; badge.addEventListener("click", (e) => { e.stopPropagation(); toggleNodeById(root, n.id); relayoutAndRender(svg, root); }); g.appendChild(badge);
     }
+
+    // 添加追问按钮
+    const questionBtn = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    questionBtn.setAttribute("class", "node-question-btn");
+    questionBtn.setAttribute("x", String(n.width / 2));
+    questionBtn.setAttribute("y", String(n.height - 8));
+    questionBtn.setAttribute("text-anchor", "middle");
+    questionBtn.textContent = "追问";
+    questionBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      addQuestionNode(root, n.id);
+      relayoutAndRender(svg, root);
+    });
+    g.appendChild(questionBtn);
 
     gNodes.appendChild(g);
   }
@@ -206,6 +283,21 @@ function computeMaxDepth(node, depth = 0) { if (!node.children || node.children.
 function toggleNodeById(root, id) { const node = findNode(root, id); if (!node) return; node.collapsed = !node.collapsed; }
 
 function findNode(node, id) { if (node.id === id) return node; for (const c of node.children) { const found = findNode(c, id); if (found) return found; } return null; }
+
+function addQuestionNode(root, parentId) {
+  const parentNode = findNode(root, parentId);
+  if (!parentNode) return;
+  
+  const newId = generateUniqueId();
+  const questionNode = makeNode(newId, "产品规划", "目标：清晰战略与节奏，确保可持续交付。\n覆盖市场-研发-增长全链路。");
+  
+  if (!parentNode.children) {
+    parentNode.children = [];
+  }
+  parentNode.children.push(questionNode);
+  
+  return questionNode;
+}
 
 function relayoutAndRender(svg, root) { layout(root); render(svg, root); updateZoomLabel(); }
 
