@@ -348,9 +348,66 @@ function setupPanning(svg) {
 const svg = document.getElementById("canvas");
 const resetBtn = document.getElementById("resetBtn");
 const randomBtn = document.getElementById("randomBtn");
+const addNodeBtn = document.getElementById("addNodeBtn");
 const zoomInBtn = document.getElementById("zoomInBtn");
 const zoomOutBtn = document.getElementById("zoomOutBtn");
 const zoomResetBtn = document.getElementById("zoomResetBtn");
+
+// 弹窗相关元素
+const addNodeModal = document.getElementById("addNodeModal");
+const addNodeForm = document.getElementById("addNodeForm");
+const cancelBtn = document.getElementById("cancelBtn");
+const closeBtn = document.querySelector(".close");
+
+// 弹窗控制函数
+function openModal() {
+  addNodeModal.style.display = "block";
+  // 清空表单
+  addNodeForm.reset();
+  // 设置默认值
+  document.getElementById("parentNodeId").value = "root";
+  document.getElementById("currentNodeId").value = generateUniqueId();
+  
+  // 更新父节点ID的提示信息
+  updateParentNodeHint();
+}
+
+function updateParentNodeHint() {
+  const parentIdInput = document.getElementById("parentNodeId");
+  const allIds = getAllNodeIds(root);
+  const hint = `可用节点ID: ${allIds.join(", ")}`;
+  parentIdInput.placeholder = hint;
+}
+
+function closeModal() {
+  addNodeModal.style.display = "none";
+}
+
+function addCustomNode(parentId, nodeId, title, body) {
+  const parentNode = findNode(root, parentId);
+  if (!parentNode) {
+    alert("未找到指定的父节点ID: " + parentId);
+    return false;
+  }
+  
+  const newNode = makeNode(nodeId, title, body);
+  
+  if (!parentNode.children) {
+    parentNode.children = [];
+  }
+  parentNode.children.push(newNode);
+  
+  return true;
+}
+
+// 获取所有节点ID列表，用于用户参考
+function getAllNodeIds(node, ids = []) {
+  ids.push(node.id);
+  if (node.children) {
+    node.children.forEach(child => getAllNodeIds(child, ids));
+  }
+  return ids;
+}
 
 let original = buildSampleData();
 let root = deepClone(original);
@@ -360,6 +417,47 @@ setupPanning(svg);
 
 resetBtn.addEventListener("click", () => { root = deepClone(original); relayoutAndRender(svg, root); });
 randomBtn.addEventListener("click", () => { const nodes = collect(root, []); const candidates = nodes.filter(n => (n.children && n.children.length > 0) || n._originalChildren); const k = Math.max(1, Math.floor(candidates.length * 0.3)); for (let i = 0; i < k; i++) { const idx = Math.floor(Math.random() * candidates.length); candidates[idx].collapsed = !candidates[idx].collapsed; } relayoutAndRender(svg, root); });
+addNodeBtn.addEventListener("click", openModal);
 zoomInBtn.addEventListener("click", () => applyZoom(+ZOOM_STEP));
 zoomOutBtn.addEventListener("click", () => applyZoom(-ZOOM_STEP));
 zoomResetBtn.addEventListener("click", () => { zoomScale = 1; applyZoom(0); });
+
+// 弹窗事件监听器
+closeBtn.addEventListener("click", closeModal);
+cancelBtn.addEventListener("click", closeModal);
+
+// 点击弹窗外部关闭弹窗
+addNodeModal.addEventListener("click", (e) => {
+  if (e.target === addNodeModal) {
+    closeModal();
+  }
+});
+
+// 表单提交处理
+addNodeForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  
+  const formData = new FormData(addNodeForm);
+  const parentId = formData.get("parentNodeId").trim();
+  const nodeId = formData.get("currentNodeId").trim();
+  const title = formData.get("nodeTitle").trim();
+  const body = formData.get("nodeBody").trim();
+  
+  if (!parentId || !nodeId || !title) {
+    alert("请填写所有必填字段");
+    return;
+  }
+  
+  if (addCustomNode(parentId, nodeId, title, body)) {
+    closeModal();
+    relayoutAndRender(svg, root);
+    alert("节点添加成功！");
+  }
+});
+
+// ESC键关闭弹窗
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && addNodeModal.style.display === "block") {
+    closeModal();
+  }
+});
