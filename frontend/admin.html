@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>思维导图管理后台</title>
+    <link rel="stylesheet" href="admin-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-brain"></i> 思维导图管理</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item active" data-tab="mind-spaces">
+                        <i class="fas fa-project-diagram"></i>
+                        <span>思维空间管理</span>
+                    </li>
+                    <li class="nav-item" data-tab="nodes">
+                        <i class="fas fa-sitemap"></i>
+                        <span>节点管理</span>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 思维空间管理 -->
+            <div class="tab-content active" id="mind-spaces">
+                <div class="content-header">
+                    <h1>思维空间管理</h1>
+                    <button class="btn btn-primary" id="create-mind-space-btn">
+                        <i class="fas fa-plus"></i> 创建思维空间
+                    </button>
+                </div>
+                
+                <div class="content-body">
+                    <div class="search-bar">
+                        <input type="text" id="mind-space-search" placeholder="搜索思维空间...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>思维空间ID</th>
+                                    <th>根节点标题</th>
+                                    <th>创建时间</th>
+                                    <th>节点数量</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mind-spaces-table-body">
+                                <!-- 动态加载数据 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 节点管理 -->
+            <div class="tab-content" id="nodes">
+                <div class="content-header">
+                    <h1>节点管理</h1>
+                    <div class="header-actions">
+                        <select id="mind-space-selector">
+                            <option value="">选择思维空间</option>
+                        </select>
+                        <button class="btn btn-primary" id="create-node-btn" disabled>
+                            <i class="fas fa-plus"></i> 创建节点
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="content-body">
+                    <div class="search-bar">
+                        <input type="text" id="node-search" placeholder="搜索节点...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>节点ID</th>
+                                    <th>标题</th>
+                                    <th>父节点</th>
+                                    <th>内容</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="nodes-table-body">
+                                <!-- 动态加载数据 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 思维空间创建/编辑模态框 -->
+    <div class="modal" id="mind-space-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="mind-space-modal-title">创建思维空间</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="mind-space-form">
+                    <div class="form-group">
+                        <label for="mind-space-id">思维空间ID</label>
+                        <input type="text" id="mind-space-id" name="mindId" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-mind-space">取消</button>
+                <button class="btn btn-primary" id="save-mind-space">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 节点创建/编辑模态框 -->
+    <div class="modal" id="node-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="node-modal-title">创建节点</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="node-form">
+                    <div class="form-group">
+                        <label for="node-mind-id">思维空间ID</label>
+                        <select id="node-mind-id" name="mindId" required>
+                            <option value="">请选择思维空间</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="node-parent-id">父节点ID</label>
+                        <select id="node-parent-id" name="parentId" required>
+                            <option value="">请选择父节点</option>
+                        </select>
+                        <small class="form-hint">根节点只能通过创建思维空间时自动创建</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="node-id">节点ID</label>
+                        <input type="text" id="node-id" name="nodeId" required>
+                        <button type="button" class="btn btn-small" id="generate-node-id">生成ID</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="node-title">标题</label>
+                        <input type="text" id="node-title" name="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="node-body">内容</label>
+                        <textarea id="node-body" name="body" rows="4"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-node">取消</button>
+                <button class="btn btn-primary" id="save-node">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认删除模态框 -->
+    <div class="modal" id="confirm-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>确认删除</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-message">确定要删除这个项目吗？</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-delete">取消</button>
+                <button class="btn btn-danger" id="confirm-delete">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin-script.js"></script>
+</body>
+</html>

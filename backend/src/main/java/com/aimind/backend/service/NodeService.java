@@ -45,16 +45,22 @@ public class NodeService {
         if (nodeRepository.existsByMindIdAndNodeId(request.getMindId(), request.getNodeId())) {
             throw new RuntimeException("节点已存在: " + request.getNodeId());
         }
-        
-        // 如果有父节点，验证父节点是否存在
-        if (request.getParentId() != null && !request.getParentId().isEmpty()) {
+
+        // 如果要创建根节点（parentId为null或空），检查该思维空间是否已有根节点
+        if (request.getParentId() == null || request.getParentId().isEmpty()) {
+            Optional<Node> existingRoot = nodeRepository.findRootNodeByMindId(request.getMindId());
+            if (existingRoot.isPresent()) {
+                throw new RuntimeException("思维空间已存在根节点，不能创建多个根节点");
+            }
+        } else {
+            // 如果有父节点，验证父节点是否存在
             Optional<Node> parentNode = nodeRepository.findByMindIdAndNodeId(
                 request.getMindId(), request.getParentId());
             if (parentNode.isEmpty()) {
                 throw new RuntimeException("父节点不存在: " + request.getParentId());
             }
         }
-        
+
         Node node = new Node(
             request.getMindId(),
             request.getParentId(),
@@ -62,9 +68,20 @@ public class NodeService {
             request.getTitle(),
             request.getBody()
         );
-        
+
         Node savedNode = nodeRepository.save(node);
         return new NodeResponse(savedNode);
+    }
+    
+    /**
+     * 获取所有节点
+     */
+    @Transactional(readOnly = true)
+    public List<NodeResponse> getAllNodes() {
+        List<Node> nodes = nodeRepository.findAll();
+        return nodes.stream()
+            .map(NodeResponse::new)
+            .collect(Collectors.toList());
     }
     
     /**

@@ -47,6 +47,19 @@ public class NodeController {
     }
     
     /**
+     * 获取所有节点
+     */
+    @GetMapping
+    public ResponseEntity<List<NodeResponse>> getAllNodes() {
+        try {
+            List<NodeResponse> responses = nodeService.getAllNodes();
+            return ResponseEntity.ok(responses);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    /**
      * 根据ID获取节点
      */
     @GetMapping("/{id}")
