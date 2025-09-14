@@ -125,6 +125,11 @@ async function apiCall(endpoint, options = {}) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
+        // 对于204 No Content响应，不尝试解析JSON
+        if (response.status === 204) {
+            return null;
+        }
+        
         return await response.json();
     } catch (error) {
         console.error('API调用失败:', error);
@@ -155,7 +160,8 @@ async function loadMindSpaces() {
             const mindSpace = mindSpaceMap.get(node.mindId);
             mindSpace.nodeCount++;
             
-            if (node.nodeId === 'root') {
+            // 根节点是parentId为null的节点
+            if (node.parentId === null || node.parentId === '') {
                 mindSpace.rootNode = node;
             }
         });
@@ -351,6 +357,7 @@ function openNodeModal(nodeId = null) {
     if (nodeId) {
         title.textContent = '编辑节点';
         // 这里可以预填充表单数据
+        loadParentNodeOptions(currentMindSpaceId);
     } else {
         title.textContent = '创建节点';
         form.reset();
@@ -371,16 +378,24 @@ async function saveMindSpace() {
             // 编辑逻辑（如果需要的话）
             showNotification('思维空间编辑功能待实现', 'info');
         } else {
-            await apiCall(`/nodes/mind-space?mindId=${encodeURIComponent(data.mindId)}`, {
-                method: 'POST'
+            // 创建思维空间，发送根节点标题和正文
+            const response = await apiCall('/nodes/mind-space', {
+                method: 'POST',
+                body: JSON.stringify({
+                    rootTitle: data.rootTitle,
+                    rootBody: data.rootBody || ''
+                })
             });
+            
             showNotification('思维空间创建成功', 'success');
+            console.log('创建的思维空间ID:', response.mindId);
         }
         
         closeAllModals();
         loadMindSpaces();
     } catch (error) {
         console.error('保存思维空间失败:', error);
+        showNotification('创建思维空间失败: ' + error.message, 'error');
     }
 }
 
@@ -436,14 +451,13 @@ async function loadParentNodeOptions(mindId) {
         // 清空现有选项
         parentSelect.innerHTML = '<option value="">请选择父节点</option>';
         
-        // 添加非根节点作为父节点选项
+        // 添加所有节点作为父节点选项（包括根节点）
         nodes.forEach(node => {
-            if (node.parentId !== null) { // 只添加非根节点
-                const option = document.createElement('option');
-                option.value = node.nodeId;
-                option.textContent = `${node.title} (${node.nodeId})`;
-                parentSelect.appendChild(option);
-            }
+            const option = document.createElement('option');
+            option.value = node.nodeId;
+            const isRoot = node.parentId === null || node.parentId === '';
+            option.textContent = `${node.title} (${isRoot ? '根节点' : node.nodeId})`;
+            parentSelect.appendChild(option);
         });
         
         // 如果没有可选的父节点，显示提示

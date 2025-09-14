@@ -1,6 +1,7 @@
 package com.aimind.backend.service;
 
 import com.aimind.backend.dto.CreateNodeRequest;
+import com.aimind.backend.dto.CreateMindSpaceRequest;
 import com.aimind.backend.dto.NodeResponse;
 import com.aimind.backend.dto.UpdateNodeRequest;
 import com.aimind.backend.entity.Node;
@@ -24,14 +25,21 @@ public class NodeService {
     /**
      * 创建思维空间（创建根节点）
      */
-    public NodeResponse createMindSpace(String mindId) {
-        // 检查思维空间是否已存在
-        if (nodeRepository.existsByMindIdAndNodeId(mindId, "root")) {
-            throw new RuntimeException("思维空间已存在: " + mindId);
-        }
+    public NodeResponse createMindSpace(CreateMindSpaceRequest request) {
+        // 生成思维空间ID
+        String mindId = UUID.randomUUID().toString();
+        
+        // 生成根节点ID
+        String rootNodeId = UUID.randomUUID().toString();
         
         // 创建根节点
-        Node rootNode = new Node(mindId, null, "root", "根节点", "这是思维导图的根节点");
+        Node rootNode = new Node(
+            mindId, 
+            null, 
+            rootNodeId, 
+            request.getRootTitle(), 
+            request.getRootBody() != null ? request.getRootBody() : ""
+        );
         Node savedNode = nodeRepository.save(rootNode);
         
         return new NodeResponse(savedNode);

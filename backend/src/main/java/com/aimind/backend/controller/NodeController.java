@@ -1,6 +1,7 @@
 package com.aimind.backend.controller;
 
 import com.aimind.backend.dto.CreateNodeRequest;
+import com.aimind.backend.dto.CreateMindSpaceRequest;
 import com.aimind.backend.dto.NodeResponse;
 import com.aimind.backend.dto.UpdateNodeRequest;
 import com.aimind.backend.service.NodeService;
@@ -24,9 +25,9 @@ public class NodeController {
      * 创建思维空间
      */
     @PostMapping("/mind-space")
-    public ResponseEntity<NodeResponse> createMindSpace(@RequestParam String mindId) {
+    public ResponseEntity<NodeResponse> createMindSpace(@Valid @RequestBody CreateMindSpaceRequest request) {
         try {
-            NodeResponse response = nodeService.createMindSpace(mindId);
+            NodeResponse response = nodeService.createMindSpace(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
