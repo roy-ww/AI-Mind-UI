@@ -519,3 +519,66 @@ select {
     color: #6c757d;
     font-size: 12px;
 }
+
+/* 表单提示 */
+.form-hint {
+    color: #666;
+    font-size: 0.85em;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+/* 带按钮的文本域 */
+.textarea-with-button {
+    position: relative;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.textarea-with-button textarea {
+    flex: 1;
+    resize: vertical;
+}
+
+/* AI补全按钮 */
+.btn-ai {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    height: fit-content;
+    align-self: flex-start;
+    margin-top: 0.25rem;
+}
+
+.btn-ai:hover:not(:disabled) {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-ai:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-ai.loading {
+    background: #999;
+    cursor: not-allowed;
+}
+
+.btn-ai.loading i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

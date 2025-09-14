@@ -32,8 +32,9 @@ const elements = {
     // 按钮
     saveMindSpace: document.getElementById('save-mind-space'),
     saveNode: document.getElementById('save-node'),
-    generateNodeId: document.getElementById('generate-node-id'),
-    confirmDelete: document.getElementById('confirm-delete')
+    confirmDelete: document.getElementById('confirm-delete'),
+    aiCompleteBtn: document.getElementById('ai-complete-btn'),
+    nodeAiCompleteBtn: document.getElementById('node-ai-complete-btn')
 };
 
 // 初始化
@@ -59,13 +60,18 @@ function setupEventListeners() {
     elements.createMindSpaceBtn.addEventListener('click', () => openMindSpaceModal());
     elements.mindSpaceSearch.addEventListener('input', filterMindSpaces);
     elements.saveMindSpace.addEventListener('click', saveMindSpace);
+    elements.aiCompleteBtn.addEventListener('click', aiCompleteContent);
+    
+    // 标题输入监听，控制AI补全按钮状态
+    document.getElementById('root-node-title').addEventListener('input', toggleAiCompleteButton);
+    document.getElementById('node-title').addEventListener('input', toggleNodeAiCompleteButton);
     
     // 节点相关
     elements.createNodeBtn.addEventListener('click', () => openNodeModal());
     elements.nodeSearch.addEventListener('input', filterNodes);
     elements.mindSpaceSelector.addEventListener('change', onMindSpaceSelect);
     elements.saveNode.addEventListener('click', saveNode);
-    elements.generateNodeId.addEventListener('click', generateNodeId);
+    elements.nodeAiCompleteBtn.addEventListener('click', nodeAiCompleteContent);
     
     // 模态框关闭
     document.querySelectorAll('.modal-close').forEach(btn => {
@@ -130,7 +136,14 @@ async function apiCall(endpoint, options = {}) {
             return null;
         }
         
-        return await response.json();
+        // 检查Content-Type来决定如何解析响应
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return await response.json();
+        } else {
+            // 对于非JSON响应（如纯文本），直接返回文本
+            return await response.text();
+        }
     } catch (error) {
         console.error('API调用失败:', error);
         showNotification('操作失败: ' + error.message, 'error');
@@ -422,12 +435,24 @@ async function saveNode() {
                 return;
             }
             
+            // 自动生成节点ID
+            let nodeId;
+            try {
+                console.log('正在生成节点ID...');
+                nodeId = await apiCall('/nodes/generate-node-id');
+                console.log('生成的节点ID:', nodeId);
+            } catch (error) {
+                console.error('生成节点ID失败:', error);
+                showNotification('生成节点ID失败: ' + error.message, 'error');
+                return;
+            }
+            
             await apiCall('/nodes', {
                 method: 'POST',
                 body: JSON.stringify({
                     mindId: data.mindId,
                     parentId: data.parentId,
-                    nodeId: data.nodeId,
+                    nodeId: nodeId,
                     title: data.title,
                     body: data.body
                 })
@@ -473,13 +498,133 @@ async function loadParentNodeOptions(mindId) {
     }
 }
 
-// 生成节点ID
-async function generateNodeId() {
+// 控制AI补全按钮状态
+function toggleAiCompleteButton() {
+    const titleInput = document.getElementById('root-node-title');
+    const aiBtn = elements.aiCompleteBtn;
+    
+    if (titleInput.value.trim().length > 0) {
+        aiBtn.disabled = false;
+    } else {
+        aiBtn.disabled = true;
+    }
+}
+
+// 控制节点AI补全按钮状态
+function toggleNodeAiCompleteButton() {
+    const titleInput = document.getElementById('node-title');
+    const aiBtn = elements.nodeAiCompleteBtn;
+    
+    if (titleInput.value.trim().length > 0) {
+        aiBtn.disabled = false;
+    } else {
+        aiBtn.disabled = true;
+    }
+}
+
+// AI补全内容
+async function aiCompleteContent() {
+    const titleInput = document.getElementById('root-node-title');
+    const bodyTextarea = document.getElementById('root-node-body');
+    const aiBtn = elements.aiCompleteBtn;
+    
+    const title = titleInput.value.trim();
+    if (!title) {
+        showNotification('请先输入根节点标题', 'warning');
+        return;
+    }
+    
+    // 设置加载状态
+    aiBtn.disabled = true;
+    aiBtn.classList.add('loading');
+    aiBtn.innerHTML = '<i class="fas fa-spinner"></i> AI生成中...';
+    
     try {
-        const nodeId = await apiCall('/nodes/generate-node-id');
-        document.getElementById('node-id').value = nodeId;
+        // 调用LLM API
+        const response = await apiCall('/llm/chat', {
+            method: 'POST',
+            body: JSON.stringify({
+                message: `请为思维导图的根节点"${title}"生成详细的内容描述。要求：
+1. 内容要全面、有条理
+2. 包含该主题的核心要点
+3. 适合作为思维导图的根节点内容
+4. 使用Markdown格式
+5. 内容长度适中，不要太长也不要太短`,
+                model: 'qwen-turbo',
+                apiKey: 'aaa',
+                temperature: 0.7
+            })
+        });
+        
+        // 调试：打印返回的响应
+        console.log('AI补全响应:', response);
+        
+        // 将AI生成的内容填入正文
+        const content = response.content || response.response || response.message || 'AI生成内容失败';
+        bodyTextarea.value = content;
+        showNotification('AI内容生成成功', 'success');
+        
     } catch (error) {
-        console.error('生成节点ID失败:', error);
+        console.error('AI补全失败:', error);
+        showNotification('AI补全失败: ' + error.message, 'error');
+    } finally {
+        // 恢复按钮状态
+        aiBtn.disabled = false;
+        aiBtn.classList.remove('loading');
+        aiBtn.innerHTML = '<i class="fas fa-magic"></i> AI补全';
+    }
+}
+
+// 节点AI补全内容
+async function nodeAiCompleteContent() {
+    const titleInput = document.getElementById('node-title');
+    const bodyTextarea = document.getElementById('node-body');
+    const aiBtn = elements.nodeAiCompleteBtn;
+    
+    const title = titleInput.value.trim();
+    if (!title) {
+        showNotification('请先输入节点标题', 'warning');
+        return;
+    }
+    
+    // 设置加载状态
+    aiBtn.disabled = true;
+    aiBtn.classList.add('loading');
+    aiBtn.innerHTML = '<i class="fas fa-spinner"></i> AI生成中...';
+    
+    try {
+        // 调用LLM API
+        const response = await apiCall('/llm/chat', {
+            method: 'POST',
+            body: JSON.stringify({
+                message: `请为思维导图的节点"${title}"生成详细的内容描述。要求：
+1. 内容要全面、有条理
+2. 包含该主题的核心要点
+3. 适合作为思维导图的节点内容
+4. 使用Markdown格式
+5. 内容长度适中，不要太长也不要太短`,
+                model: 'qwen-turbo',
+                apiKey: 'aaa',
+                temperature: 0.7
+            })
+        });
+        
+        // 调试：打印返回的响应
+        console.log('节点AI补全响应:', response);
+        
+        // 将AI生成的内容填入正文
+        const content = response.content || response.response || response.message || 'AI生成内容失败';
+        bodyTextarea.value = content;
+        showNotification('AI内容生成成功', 'success');
+        
+    } catch (error) {
+        console.error('节点AI补全失败:', error);
+        showNotification('AI补全失败: ' + error.message, 'error');
+    } finally {
+        // 恢复按钮状态
+        aiBtn.disabled = false;
+        aiBtn.classList.remove('loading');
+        aiBtn.innerHTML = '<i class="fas fa-magic"></i> AI补全';
     }
 }
 
