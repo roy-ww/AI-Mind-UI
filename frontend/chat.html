@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 大模型问答 - AI Mind</title>
+    <link rel="stylesheet" href="chat-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-robot"></i> AI 大模型问答</h1>
+                <div class="model-selector">
+                    <label for="model-select">选择模型：</label>
+                    <select id="model-select">
+                        <option value="qwen-turbo">通义千问 Turbo</option>
+                        <option value="qwen-plus">通义千问 Plus</option>
+                        <option value="kimi">Kimi K2 Instruct</option>
+                    </select>
+                </div>
+            </div>
+        </header>
+
+        <!-- 聊天区域 -->
+        <div class="chat-container">
+            <div class="chat-messages" id="chat-messages">
+                <div class="welcome-message">
+                    <div class="message-content">
+                        <i class="fas fa-robot"></i>
+                        <h3>欢迎使用 AI 大模型问答</h3>
+                        <p>请选择您想要使用的模型，然后开始提问吧！</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 输入区域 -->
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="message-input" 
+                        placeholder="请输入您的问题..." 
+                        rows="3"
+                        maxlength="2000"
+                    ></textarea>
+                    <button id="send-button" class="send-button">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <span class="char-count">0/2000</span>
+                    <div class="shortcuts">
+                        <button class="shortcut-btn" data-text="请帮我解释一下">解释</button>
+                        <button class="shortcut-btn" data-text="请帮我总结一下">总结</button>
+                        <button class="shortcut-btn" data-text="请帮我写一个">写作</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 加载指示器 -->
+        <div class="loading-indicator" id="loading-indicator">
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <p>AI 正在思考中...</p>
+        </div>
+    </div>
+
+    <!-- 设置模态框 -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>API 设置</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="bailian-api-key">阿里百炼 API Key:</label>
+                    <input type="password" id="bailian-api-key" placeholder="请输入您的阿里百炼 API Key">
+                    <small class="form-hint">所有模型都使用同一个阿里百炼平台的API Key</small>
+                </div>
+                <div class="form-group">
+                    <label for="temperature">温度 (0-1):</label>
+                    <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
+                    <span id="temperature-value">0.7</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-settings">取消</button>
+                <button class="btn btn-primary" id="save-settings">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置按钮 -->
+    <button class="settings-button" id="settings-button">
+        <i class="fas fa-cog"></i>
+    </button>
+
+    <script src="chat-script.js"></script>
+</body>
+</html>
