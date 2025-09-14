@@ -26,3 +26,6 @@ replay_pid*
 backend/target/
 backend/logs/
 .vscode/
+
+# 配置文件 - 包含敏感信息
+backend/src/main/resources/application-secret.yml

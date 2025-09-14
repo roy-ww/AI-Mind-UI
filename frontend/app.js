@@ -15,6 +15,36 @@ const CONFIG = {
   fontFamily: "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
 };
 
+// 配置Markdown解析器
+if (typeof marked !== 'undefined') {
+  marked.setOptions({
+    highlight: function(code, lang) {
+      if (typeof hljs === 'undefined') {
+        return code;
+      }
+      
+      if (lang && hljs.getLanguage(lang)) {
+        try {
+          return hljs.highlight(code, { language: lang }).value;
+        } catch (err) {
+          console.warn('代码高亮失败:', err);
+          return code;
+        }
+      }
+      try {
+        return hljs.highlightAuto(code).value;
+      } catch (err) {
+        console.warn('自动代码高亮失败:', err);
+        return code;
+      }
+    },
+    breaks: true,
+    gfm: true
+  });
+} else {
+  console.warn('marked.js 未加载，Markdown功能将不可用');
+}
+
 let zoomScale = 1;
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2.5;
@@ -67,6 +97,73 @@ function wrapParagraph(text, maxWidth) {
 function parseBodyContent(body) {
   if (!body) return [];
   
+  // 检测是否为Markdown格式
+  const isMarkdown = /^#+\s|^\*\s|^\d+\.\s|```|`[^`]+`|\[.*\]\(.*\)|!\[.*\]\(.*\)/.test(body);
+  
+  if (isMarkdown) {
+    // 使用Markdown解析
+    return parseMarkdownContent(body);
+  } else {
+    // 使用原有的简单解析
+    return parsePlainTextContent(body);
+  }
+}
+
+function parseMarkdownContent(body) {
+  try {
+    // 检查marked是否可用
+    if (typeof marked === 'undefined') {
+      console.warn('marked.js 未加载，回退到纯文本解析');
+      return parsePlainTextContent(body);
+    }
+    
+    // 使用marked解析Markdown
+    const html = marked.parse(body);
+    
+    // 将HTML转换为适合SVG的格式
+    const content = [];
+    const lines = body.split('\n');
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line === "") {
+        content.push({ type: "empty", text: "" });
+      } else if (line.startsWith("###")) {
+        // 三级标题
+        content.push({ type: "subtitle", text: line.substring(3).trim(), level: 3 });
+      } else if (line.startsWith("##")) {
+        // 二级标题
+        content.push({ type: "subtitle", text: line.substring(2).trim(), level: 2 });
+      } else if (line.startsWith("#")) {
+        // 一级标题
+        content.push({ type: "subtitle", text: line.substring(1).trim(), level: 1 });
+      } else if (line.startsWith("- ") || line.startsWith("* ")) {
+        // 列表项
+        content.push({ type: "list", text: line.substring(2).trim() });
+      } else if (/^\d+\.\s/.test(line)) {
+        // 有序列表
+        content.push({ type: "list", text: line.replace(/^\d+\.\s/, "").trim() });
+      } else if (line.startsWith("```")) {
+        // 代码块开始/结束
+        content.push({ type: "code", text: line });
+      } else if (line.startsWith("`") && line.endsWith("`")) {
+        // 行内代码
+        content.push({ type: "code-inline", text: line.substring(1, line.length - 1) });
+      } else {
+        // 普通段落
+        content.push({ type: "paragraph", text: line });
+      }
+    }
+    
+    return content;
+  } catch (error) {
+    console.error('Markdown解析失败:', error);
+    // 回退到纯文本解析
+    return parsePlainTextContent(body);
+  }
+}
+
+function parsePlainTextContent(body) {
   const lines = body.split("\n");
   const content = [];
   
@@ -126,9 +223,10 @@ function generateUniqueId() {
 }
 
 function buildSampleData() {
-  return makeNode("root", "产品规划", "目标：清晰战略与节奏，确保可持续交付。\n覆盖市场-研发-增长全链路。", [/*
-    makeNode("a", "市场洞察", "# 核心目标\n用户画像、痛点聚合、需求优先级。\n\n## 研究方法\n通过定性与定量结合形成决策依据。\n\n## 关键指标\n用户满意度、市场占有率、竞品对比。", [
-      makeNode("a1", "用户调研", "# 调研计划\n访谈 N=20；问卷 N=300。\n\n## 核心发现\n核心诉求、流失原因与替代方案偏好。\n\n## 下一步行动\n基于调研结果优化产品功能。"),
+  var rc = '# 市场洞察\n\n## 核心目标\n用户画像、痛点聚合、需求优先级。\n\n### 研究方法\n通过定性与定量结合形成决策依据。\n\n#### 数据来源\n1. 用户访谈（N=50）\n2. 问卷调查（N=1000）\n3. 行为数据分析\n\n### 关键指标\n- 用户满意度 > 85%\n- 市场占有率提升 20%\n- 竞品对比分析';
+  return makeNode("root", "产品规划", rc, [/*
+    makeNode("a", "市场洞察", "# 市场洞察\n\n## 核心目标\n用户画像、痛点聚合、需求优先级。\n\n### 研究方法\n通过定性与定量结合形成决策依据。\n\n#### 数据来源\n1. 用户访谈（N=50）\n2. 问卷调查（N=1000）\n3. 行为数据分析\n\n### 关键指标\n- 用户满意度 > 85%\n- 市场占有率提升 20%\n- 竞品对比分析", [
+      makeNode("a1", "用户调研", "# 用户调研计划\n\n## 调研方法\n- 访谈：N=20 深度访谈\n- 问卷：N=300 在线调研\n- 观察：用户行为分析\n\n### 核心发现\n1. **核心诉求**：易用性、性能、价格\n2. **流失原因**：功能缺失、学习成本高\n3. **替代方案偏好**：竞品A、竞品B\n\n### 技术实现\n```javascript\nconst surveyData = {\n  total: 300,\n  completion: 0.85,\n  satisfaction: 4.2\n};\n```\n\n## 下一步行动\n基于调研结果优化产品功能。"),
       makeNode("a2", "竞品分析", "# 分析维度\n功能覆盖度、定价、渠道、增长机制与差异化定位。", [
         makeNode("a21", "功能矩阵", "# 功能分类\n必选/可选能力映射，找差距并形成跟进计划。\n\n## 优先级排序\n根据用户价值和实现难度排序。"),
         makeNode("a22", "价格策略", "# 定价模式\n分层定价（免费/专业/企业），试用期与转化路径设计。\n\n## 价格测试\nA/B测试不同价格点的转化率。"),
@@ -247,10 +345,35 @@ function render(svg, root) {
           continue;
         }
         const t = document.createElementNS("http://www.w3.org/2000/svg", "text"); 
-        t.setAttribute("class", line.type === "subtitle" ? "node-subtitle" : "node-paragraph"); 
+        
+        // 根据内容类型设置CSS类
+        let className = "node-paragraph";
+        if (line.type === "subtitle") {
+          className = "node-subtitle";
+          if (line.level === 1) className += " node-h1";
+          else if (line.level === 2) className += " node-h2";
+          else if (line.level === 3) className += " node-h3";
+        } else if (line.type === "list") {
+          className = "node-list";
+        } else if (line.type === "code") {
+          className = "node-code";
+        } else if (line.type === "code-inline") {
+          className = "node-code-inline";
+        }
+        
+        t.setAttribute("class", className); 
         t.setAttribute("x", String(CONFIG.nodePaddingX)); 
         t.setAttribute("y", String(y)); 
-        t.textContent = line.text; 
+        
+        // 处理特殊字符和格式
+        let displayText = line.text;
+        if (line.type === "list") {
+          displayText = "• " + displayText;
+        } else if (line.type === "code-inline") {
+          displayText = "`" + displayText + "`";
+        }
+        
+        t.textContent = displayText; 
         g.appendChild(t); 
         y += CONFIG.bodyLineHeight; 
       } 

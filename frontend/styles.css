@@ -192,3 +192,63 @@ svg.dragging { cursor: grabbing; }
   background: #5a9eff;
   border-color: #5a9eff;
 }
+
+/* Markdown样式支持 */
+.node-h1 {
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  fill: var(--text) !important;
+}
+
+.node-h2 {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  fill: var(--text) !important;
+}
+
+.node-h3 {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  fill: var(--text) !important;
+}
+
+.node-list {
+  font-size: 12px !important;
+  fill: var(--muted) !important;
+  dominant-baseline: hanging !important;
+}
+
+.node-code {
+  font-size: 11px !important;
+  fill: var(--accent) !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+  dominant-baseline: hanging !important;
+}
+
+.node-code-inline {
+  font-size: 11px !important;
+  fill: var(--accent) !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+  dominant-baseline: hanging !important;
+  background: rgba(255, 200, 87, 0.1);
+  padding: 1px 3px;
+  border-radius: 3px;
+}
+
+/* 增强的段落样式 */
+.node-paragraph {
+  font-size: 12px !important;
+  fill: var(--muted) !important;
+  dominant-baseline: hanging !important;
+  line-height: 1.4 !important;
+}
+
+/* 增强的子标题样式 */
+.node-subtitle {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  fill: var(--text) !important;
+  dominant-baseline: hanging !important;
+  margin-top: 2px;
+  margin-bottom: 1px;
+}
