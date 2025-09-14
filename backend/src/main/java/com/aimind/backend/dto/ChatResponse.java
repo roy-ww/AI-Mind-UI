@@ -6,6 +6,7 @@ public class ChatResponse {
     private String model;
     private Integer tokensUsed;
     private Long responseTime;
+    private LLMResponse structuredResponse;
 
     // 构造函数
     public ChatResponse() {}
@@ -15,6 +16,14 @@ public class ChatResponse {
         this.model = model;
         this.tokensUsed = tokensUsed;
         this.responseTime = responseTime;
+    }
+
+    public ChatResponse(String content, String model, Integer tokensUsed, Long responseTime, LLMResponse structuredResponse) {
+        this.content = content;
+        this.model = model;
+        this.tokensUsed = tokensUsed;
+        this.responseTime = responseTime;
+        this.structuredResponse = structuredResponse;
     }
 
     // Getters and Setters
@@ -48,5 +57,13 @@ public class ChatResponse {
 
     public void setResponseTime(Long responseTime) {
         this.responseTime = responseTime;
+    }
+
+    public LLMResponse getStructuredResponse() {
+        return structuredResponse;
+    }
+
+    public void setStructuredResponse(LLMResponse structuredResponse) {
+        this.structuredResponse = structuredResponse;
     }
 }

@@ -2,13 +2,13 @@ package com.aimind.backend.service;
 
 import com.aimind.backend.dto.ChatRequest;
 import com.aimind.backend.dto.ChatResponse;
+import com.aimind.backend.dto.LLMResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -52,7 +52,17 @@ public class LLMService {
             String response = callBailianAPI(request);
             long responseTime = System.currentTimeMillis() - startTime;
             
-            return new ChatResponse(response, request.getModel(), null, responseTime);
+            // 尝试解析JSON响应为结构化对象
+            LLMResponse structuredResponse = null;
+            try {
+                structuredResponse = objectMapper.readValue(response, LLMResponse.class);
+                System.out.println("成功解析大模型响应为结构化对象: " + structuredResponse);
+            } catch (Exception parseException) {
+                System.out.println("无法解析大模型响应为JSON格式，使用原始文本: " + parseException.getMessage());
+                // 如果解析失败，structuredResponse保持为null，使用原始文本
+            }
+            
+            return new ChatResponse(response, request.getModel(), null, responseTime, structuredResponse);
             
         } catch (Exception e) {
             throw new RuntimeException("调用大模型API失败: " + e.getMessage(), e);
