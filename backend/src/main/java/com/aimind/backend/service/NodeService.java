@@ -1,6 +1,8 @@
 package com.aimind.backend.service;
 
 import com.aimind.backend.dto.CreateNodeRequest;
+import com.aimind.backend.dto.ChatRequest;
+import com.aimind.backend.dto.ChatResponse;
 import com.aimind.backend.dto.CreateMindSpaceRequest;
 import com.aimind.backend.dto.NodeResponse;
 import com.aimind.backend.dto.UpdateNodeRequest;
@@ -21,6 +23,35 @@ public class NodeService {
     
     @Autowired
     private NodeRepository nodeRepository;
+    @Autowired
+    private LLMService llmService;
+
+    /**
+     * 创建思维空间 by AI
+     */
+    public NodeResponse createMindSpaceByAI(String rootTitle) {
+        // 生成思维空间ID
+        String mindId = UUID.randomUUID().toString();
+        
+        // 生成根节点ID
+        String rootNodeId = UUID.randomUUID().toString();
+
+        //根据根节点标题生成根节点内容
+        ChatRequest chatRequest = new ChatRequest(rootTitle, null);
+        ChatResponse chatResponse = llmService.chat(chatRequest);
+        String bodyString = chatResponse.getContent();
+        // 创建根节点
+        Node rootNode = new Node(
+            mindId, 
+            null, 
+            rootNodeId, 
+            rootTitle, 
+            bodyString != null ? bodyString: ""
+        );
+        Node savedNode = nodeRepository.save(rootNode);
+        
+        return new NodeResponse(savedNode);
+    }
     
     /**
      * 创建思维空间（创建根节点）

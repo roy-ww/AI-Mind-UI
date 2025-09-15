@@ -1,5 +1,5 @@
 // 全局变量
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = 'http://localhost:8080';
 let currentMindSpaceId = null;
 let currentEditingId = null;
 
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeApp() {
     setupEventListeners();
     loadMindSpaces();
-    setupTabNavigation();
+    //setupTabNavigation();
 }
 
 // 设置事件监听器

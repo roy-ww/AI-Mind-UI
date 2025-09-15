@@ -22,6 +22,23 @@ public class NodeController {
     private NodeService nodeService;
     
     /**
+     * 创建思维空间 by AI
+     */
+    @PostMapping("/mind-space-by-ai")
+    public ResponseEntity<NodeResponse> createMindSpaceByAI(@Valid @RequestBody String rootTitle) {
+        try {
+            System.out.println("收到创建思维空间请求，标题: " + rootTitle);
+            NodeResponse response = nodeService.createMindSpaceByAI(rootTitle);
+            System.out.println("思维空间创建成功，ID: " + response.getMindId());
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            System.err.println("创建思维空间失败: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    /**
      * 创建思维空间
      */
     @PostMapping("/mind-space")
@@ -165,4 +182,5 @@ public class NodeController {
         String nodeId = nodeService.generateNodeId();
         return ResponseEntity.ok(nodeId);
     }
+
 }

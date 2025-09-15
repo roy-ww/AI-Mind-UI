@@ -21,6 +21,12 @@ public class LLMService {
     @Autowired
     private WebClient.Builder webClientBuilder;
 
+    @Value("${llm.model:qwen-turbo}")
+    private String defaultModel;
+
+    @Value("${llm.temperature:0.7}")
+    private Double defaultTemperature;
+
     @Value("${llm.api.bailian.api-key:}")
     private String bailianApiKey;
 
@@ -44,8 +50,8 @@ public class LLMService {
         
         try {
             // 验证模型是否支持
-            if (!MODEL_CONFIG.containsKey(request.getModel())) {
-                throw new RuntimeException("不支持的模型: " + request.getModel() + 
+            if (!MODEL_CONFIG.containsKey(defaultModel)) {
+                throw new RuntimeException("不支持的模型: " + defaultModel + 
                     "，支持的模型: " + String.join(", ", MODEL_CONFIG.keySet()));
             }
             
@@ -62,7 +68,7 @@ public class LLMService {
                 // 如果解析失败，structuredResponse保持为null，使用原始文本
             }
             
-            return new ChatResponse(response, request.getModel(), null, responseTime, structuredResponse);
+            return new ChatResponse(response, defaultModel, null, responseTime, structuredResponse);
             
         } catch (Exception e) {
             throw new RuntimeException("调用大模型API失败: " + e.getMessage(), e);
@@ -77,13 +83,13 @@ public class LLMService {
             }
             
             // 获取实际模型名称
-            String actualModel = MODEL_CONFIG.get(request.getModel());
+            String actualModel = MODEL_CONFIG.get(defaultModel);
             
             // 构建请求体
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("model", actualModel);
             requestBody.put("messages", buildMessages(request));
-            requestBody.put("temperature", request.getTemperature());
+            requestBody.put("temperature", defaultTemperature);
             requestBody.put("max_tokens", 2000);
             requestBody.put("stream", false);
 

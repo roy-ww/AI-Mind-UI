@@ -1,5 +1,5 @@
 // 全局变量
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = 'http://localhost:8080';
 let currentModel = 'qwen-turbo';
 let conversationHistory = [];
 
