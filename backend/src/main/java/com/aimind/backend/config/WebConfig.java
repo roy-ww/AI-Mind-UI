@@ -21,8 +21,18 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResourceLocations("file:" + frontendPath + "/")
                 .setCachePeriod(0); // 开发环境不缓存
         
-        // 配置静态资源文件
-        registry.addResourceHandler("*.css", "*.js", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.svg", "*.ico")
+        // 配置CSS文件
+        registry.addResourceHandler("css/*")
+                .addResourceLocations("file:" + frontendPath + "/css/")
+                .setCachePeriod(0); // 开发环境不缓存
+        
+        // 配置JS文件
+        registry.addResourceHandler("js/*")
+                .addResourceLocations("file:" + frontendPath + "/js/")
+                .setCachePeriod(0); // 开发环境不缓存
+        
+        // 配置其他静态资源文件
+        registry.addResourceHandler("*.png", "*.jpg", "*.jpeg", "*.gif", "*.svg", "*.ico")
                 .addResourceLocations("file:" + frontendPath + "/")
                 .setCachePeriod(0); // 开发环境不缓存
     }

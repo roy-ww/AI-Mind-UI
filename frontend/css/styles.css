@@ -33,7 +33,7 @@ svg.dragging { cursor: grabbing; }
 .node-title { font-size: 18px; font-weight: 700; fill: var(--text); dominant-baseline: hanging; }
 .node-body { font-size: 12px; fill: var(--muted); dominant-baseline: hanging; line-height: 1.25; }
 .node-subtitle { font-size: 12px; font-weight: 700; fill: var(--text); dominant-baseline: hanging; }
-.node-paragraph { font-size: 12px; fill: var(--muted); dominant-baseline: hanging; line-height: 1.25; }
+.node-paragraph { font-size: 12px; fill: var(--muted); dominant-baseline: hanging; line-height: 1.6; }
 .node-badge { font-size: 11px; fill: var(--muted); dominant-baseline: middle; cursor: pointer; -webkit-user-select: none; user-select: none; }
 .node-question-btn { 
   font-size: 10px; 
@@ -240,7 +240,7 @@ svg.dragging { cursor: grabbing; }
   font-size: 12px !important;
   fill: var(--muted) !important;
   dominant-baseline: hanging !important;
-  line-height: 1.4 !important;
+  line-height: 1.6 !important;
 }
 
 /* 增强的子标题样式 */

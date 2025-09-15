@@ -9,7 +9,7 @@ const CONFIG = {
   nodePaddingY: 10,
   titleBodyGap: 20,
   titleLineHeight: 15,
-  bodyLineHeight: 10,
+  bodyLineHeight: 15,
   minNodeHeight: 36,
   minCollapsedHeight: 28,
   fontFamily: "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
@@ -97,94 +97,32 @@ function wrapParagraph(text, maxWidth) {
 function parseBodyContent(body) {
   if (!body) return [];
   
-  // 检测是否为Markdown格式
-  const isMarkdown = /^#+\s|^\*\s|^\d+\.\s|```|`[^`]+`|\[.*\]\(.*\)|!\[.*\]\(.*\)/.test(body);
-  
-  if (isMarkdown) {
-    // 使用Markdown解析
-    return parseMarkdownContent(body);
-  } else {
-    // 使用原有的简单解析
-    return parsePlainTextContent(body);
-  }
+  return parseSectionsContent(body);
 }
 
-function parseMarkdownContent(body) {
-  try {
-    // 检查marked是否可用
-    if (typeof marked === 'undefined') {
-      console.warn('marked.js 未加载，回退到纯文本解析');
-      return parsePlainTextContent(body);
-    }
-    
-    // 使用marked解析Markdown
-    const html = marked.parse(body);
-    
-    // 将HTML转换为适合SVG的格式
-    const content = [];
-    const lines = body.split('\n');
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (line === "") {
-        content.push({ type: "empty", text: "" });
-      } else if (line.startsWith("###")) {
-        // 三级标题
-        content.push({ type: "subtitle", text: line.substring(3).trim(), level: 3 });
-      } else if (line.startsWith("##")) {
-        // 二级标题
-        content.push({ type: "subtitle", text: line.substring(2).trim(), level: 2 });
-      } else if (line.startsWith("#")) {
-        // 一级标题
-        content.push({ type: "subtitle", text: line.substring(1).trim(), level: 1 });
-      } else if (line.startsWith("- ") || line.startsWith("* ")) {
-        // 列表项
-        content.push({ type: "list", text: line.substring(2).trim() });
-      } else if (/^\d+\.\s/.test(line)) {
-        // 有序列表
-        content.push({ type: "list", text: line.replace(/^\d+\.\s/, "").trim() });
-      } else if (line.startsWith("```")) {
-        // 代码块开始/结束
-        content.push({ type: "code", text: line });
-      } else if (line.startsWith("`") && line.endsWith("`")) {
-        // 行内代码
-        content.push({ type: "code-inline", text: line.substring(1, line.length - 1) });
-      } else {
-        // 普通段落
-        content.push({ type: "paragraph", text: line });
-      }
-    }
-    
-    return content;
-  } catch (error) {
-    console.error('Markdown解析失败:', error);
-    // 回退到纯文本解析
-    return parsePlainTextContent(body);
+
+function parseSectionsContent(body) {
+   /*
+    sections: 数组，每个元素是一个对象，包含以下字段：
+      title: 字符串，标题
+      content: 字符串，内容
+    concepts: 数组，每个元素是一个字符串，概念
+    questions: 数组，每个元素是一个字符串，问题
+  */
+  const sections = body;
+// 将HTML转换为适合SVG的格式
+const contentText = [];
+  for (let i = 0; i < sections.length; i++) {
+    const title = sections[i].title;
+    const content = sections[i].content;
+
+    contentText.push({ type: "subtitle", text: title, level: 3 });
+    contentText.push({ type: "paragraph", text: content });
   }
+  return contentText;
 }
 
-function parsePlainTextContent(body) {
-  const lines = body.split("\n");
-  const content = [];
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (line === "") {
-      content.push({ type: "empty", text: "" });
-    } else if (line.startsWith("##")) {
-      // 子标题：以 ## 开头
-      content.push({ type: "subtitle", text: line.substring(2).trim() });
-    } else if (line.startsWith("#")) {
-      // 子标题：以 # 开头
-      content.push({ type: "subtitle", text: line.substring(1).trim() });
-    } else {
-      // 普通段落
-      content.push({ type: "paragraph", text: line });
-    }
-  }
-  
-  return content;
-}
+
 
 function wrapBodyText(body, innerWidth) {
   const content = parseBodyContent(body);
@@ -214,6 +152,7 @@ function wrapBodyText(body, innerWidth) {
   return allLines;
 }
 
+
 function makeNode(id, title, body = "", children = [], height) {
   return { id, title, body, children, collapsed: false, width: CONFIG.baseNodeWidth, height: height ?? undefined, x: 0, y: 0, subtreeHeight: 0, _wrappedBodyLines: undefined };
 }
@@ -222,9 +161,45 @@ function generateUniqueId() {
   return 'node_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
-function buildSampleData() {
+async function buildSampleData() {
+
+  var mindId = '26fafef1-464b-4847-8cb6-2ca42a183d20'; 
+  var nodeId = '1acb22c7-fe2b-430f-9ced-1eea5ce8d756';
+
+  /**
+   * 通过mindId和nodeId获取节点信息
+   * 然后通过获取的节点信息，构建makeNode信息 
+   */
+  var response = await fetch(`/nodes/mind/${mindId}/node/${nodeId}`);
+  var data = await response.json();
+  var title = data.title;
+  var body = data.body;
+  var nodeId = data.nodeId;
+
+ 
+  var body = JSON.parse(body);
+  /*
+    sections: 数组，每个元素是一个对象，包含以下字段：
+    title: 字符串，标题
+    content: 字符串，内容
+    concepts: 数组，每个元素是一个字符串，概念
+    questions: 数组，每个元素是一个字符串，问题
+  */
+  var sections = body.sections;
+  //var concepts = body.concepts;
+  //var questions = body.questions;
+  //var sectionsContent = sections.map(section => section.content).join("\n");
+
+  //通过sections构建marknode节点
+
+  return makeNode(nodeId, title, sections, []);
+
+
+
+  /*
+  // 备用示例数据（已注释）
   var rc = '# 市场洞察\n\n## 核心目标\n用户画像、痛点聚合、需求优先级。\n\n### 研究方法\n通过定性与定量结合形成决策依据。\n\n#### 数据来源\n1. 用户访谈（N=50）\n2. 问卷调查（N=1000）\n3. 行为数据分析\n\n### 关键指标\n- 用户满意度 > 85%\n- 市场占有率提升 20%\n- 竞品对比分析';
-  return makeNode("root", "产品规划", rc, [/*
+  return makeNode("root", "产品规划", rc, [
     makeNode("a", "市场洞察", "# 市场洞察\n\n## 核心目标\n用户画像、痛点聚合、需求优先级。\n\n### 研究方法\n通过定性与定量结合形成决策依据。\n\n#### 数据来源\n1. 用户访谈（N=50）\n2. 问卷调查（N=1000）\n3. 行为数据分析\n\n### 关键指标\n- 用户满意度 > 85%\n- 市场占有率提升 20%\n- 竞品对比分析", [
       makeNode("a1", "用户调研", "# 用户调研计划\n\n## 调研方法\n- 访谈：N=20 深度访谈\n- 问卷：N=300 在线调研\n- 观察：用户行为分析\n\n### 核心发现\n1. **核心诉求**：易用性、性能、价格\n2. **流失原因**：功能缺失、学习成本高\n3. **替代方案偏好**：竞品A、竞品B\n\n### 技术实现\n```javascript\nconst surveyData = {\n  total: 300,\n  completion: 0.85,\n  satisfaction: 4.2\n};\n```\n\n## 下一步行动\n基于调研结果优化产品功能。"),
       makeNode("a2", "竞品分析", "# 分析维度\n功能覆盖度、定价、渠道、增长机制与差异化定位。", [
@@ -250,9 +225,12 @@ function buildSampleData() {
         makeNode("c31", "A/B 实验", "# 实验设计\n注册转化、首日留存，样本量与显著性控制。\n\n## 实验流程\n假设提出、实验设计、结果分析、决策执行。"),
         makeNode("c32", "留存提升", "# 留存策略\n触达/激励/价值回访，基于分层用户画像制定策略。\n\n## 用户分层\n新用户、活跃用户、流失用户的不同策略。")
       ])
-    ])*/
+    ])
   ]);
+  */
 }
+
+
 
 function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
 
@@ -532,18 +510,40 @@ function getAllNodeIds(node, ids = []) {
   return ids;
 }
 
-let original = buildSampleData();
-let root = deepClone(original);
+// 异步初始化数据
+async function initializeData() {
+  let original = await buildSampleData();
+  let root = deepClone(original);
 
-relayoutAndRender(svg, root);
-setupPanning(svg);
+  relayoutAndRender(svg, root);
+  setupPanning(svg);
+  
+  // 设置事件监听器
+  resetBtn.addEventListener("click", async () => { 
+    original = await buildSampleData();
+    root = deepClone(original); 
+    relayoutAndRender(svg, root); 
+  });
+  
+  randomBtn.addEventListener("click", () => { 
+    const nodes = collect(root, []); 
+    const candidates = nodes.filter(n => (n.children && n.children.length > 0) || n._originalChildren); 
+    const k = Math.max(1, Math.floor(candidates.length * 0.3)); 
+    for (let i = 0; i < k; i++) { 
+      const idx = Math.floor(Math.random() * candidates.length); 
+      candidates[idx].collapsed = !candidates[idx].collapsed; 
+    } 
+    relayoutAndRender(svg, root); 
+  });
+  
+  addNodeBtn.addEventListener("click", openModal);
+  zoomInBtn.addEventListener("click", () => applyZoom(+ZOOM_STEP));
+  zoomOutBtn.addEventListener("click", () => applyZoom(-ZOOM_STEP));
+  zoomResetBtn.addEventListener("click", () => { zoomScale = 1; applyZoom(0); });
+}
 
-resetBtn.addEventListener("click", () => { root = deepClone(original); relayoutAndRender(svg, root); });
-randomBtn.addEventListener("click", () => { const nodes = collect(root, []); const candidates = nodes.filter(n => (n.children && n.children.length > 0) || n._originalChildren); const k = Math.max(1, Math.floor(candidates.length * 0.3)); for (let i = 0; i < k; i++) { const idx = Math.floor(Math.random() * candidates.length); candidates[idx].collapsed = !candidates[idx].collapsed; } relayoutAndRender(svg, root); });
-addNodeBtn.addEventListener("click", openModal);
-zoomInBtn.addEventListener("click", () => applyZoom(+ZOOM_STEP));
-zoomOutBtn.addEventListener("click", () => applyZoom(-ZOOM_STEP));
-zoomResetBtn.addEventListener("click", () => { zoomScale = 1; applyZoom(0); });
+// 启动初始化
+initializeData();
 
 // 弹窗事件监听器
 closeBtn.addEventListener("click", closeModal);
