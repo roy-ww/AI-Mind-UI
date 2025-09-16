@@ -183,4 +183,12 @@ public class NodeController {
         return ResponseEntity.ok(nodeId);
     }
 
+    /**
+     * 访问思维导图页面
+     */
+    @GetMapping("/mindmap-page")
+    public String mindmapPage() {
+        return "forward:/mindmap.html";
+    }
+
 }

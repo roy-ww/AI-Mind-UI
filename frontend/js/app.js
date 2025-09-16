@@ -161,73 +161,107 @@ function generateUniqueId() {
   return 'node_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
+// 从URL参数获取mindId
+function getMindIdFromUrl() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('mindId');
+}
+
+// 构建节点树结构
+function buildNodeTree(nodes, parentId = null) {
+  const children = nodes.filter(node => node.parentId === parentId);
+  return children.map(node => {
+    const childNodes = buildNodeTree(nodes, node.nodeId);
+    return makeNode(node.nodeId, node.title, node.body, childNodes);
+  });
+}
+
 async function buildSampleData() {
+  // 从URL参数获取mindId
+  const mindId = getMindIdFromUrl();
+  
+  if (!mindId) {
+    console.error('未找到mindId参数');
+    // 返回默认示例数据
+    return makeNode("root", "请提供mindId参数", "请在URL中添加?mindId=your_mind_id", []);
+  }
 
-  var mindId = '26fafef1-464b-4847-8cb6-2ca42a183d20'; 
-  var nodeId = '1acb22c7-fe2b-430f-9ced-1eea5ce8d756';
+  try {
+    // 通过mindId获取所有节点信息
+    const response = await fetch(`/nodes/mind/${mindId}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const nodes = await response.json();
+    console.log('获取到的节点数据:', nodes);
+    
+    if (!nodes || nodes.length === 0) {
+      return makeNode("root", "思维空间为空", "该思维空间下没有节点", []);
+    }
 
-  /**
-   * 通过mindId和nodeId获取节点信息
-   * 然后通过获取的节点信息，构建makeNode信息 
-   */
-  var response = await fetch(`/nodes/mind/${mindId}/node/${nodeId}`);
-  var data = await response.json();
-  var title = data.title;
-  var body = data.body;
-  var nodeId = data.nodeId;
+    // 找到根节点（parentId为null或空的节点）
+    const rootNodes = nodes.filter(node => !node.parentId || node.parentId === '');
+    
+    if (rootNodes.length === 0) {
+      return makeNode("root", "未找到根节点", "该思维空间下没有根节点", []);
+    }
 
- 
-  var body = JSON.parse(body);
-  /*
-    sections: 数组，每个元素是一个对象，包含以下字段：
-    title: 字符串，标题
-    content: 字符串，内容
-    concepts: 数组，每个元素是一个字符串，概念
-    questions: 数组，每个元素是一个字符串，问题
-  */
-  var sections = body.sections;
-  //var concepts = body.concepts;
-  //var questions = body.questions;
-  //var sectionsContent = sections.map(section => section.content).join("\n");
+    // 如果有多个根节点，选择第一个作为主根节点
+    const rootNode = rootNodes[0];
+    
+    // 解析body内容
+    let bodyContent = [];
+    try {
+      if (rootNode.body) {
+        const parsedBody = JSON.parse(rootNode.body);
+        if (parsedBody.sections) {
+          bodyContent = parsedBody.sections;
+        } else {
+          bodyContent = [{ title: "内容", content: rootNode.body }];
+        }
+      }
+    } catch (e) {
+      console.warn('解析body内容失败:', e);
+      bodyContent = [{ title: "内容", content: rootNode.body || "" }];
+    }
 
-  //通过sections构建marknode节点
-
-  return makeNode(nodeId, title, sections, []);
-
-
-
-  /*
-  // 备用示例数据（已注释）
-  var rc = '# 市场洞察\n\n## 核心目标\n用户画像、痛点聚合、需求优先级。\n\n### 研究方法\n通过定性与定量结合形成决策依据。\n\n#### 数据来源\n1. 用户访谈（N=50）\n2. 问卷调查（N=1000）\n3. 行为数据分析\n\n### 关键指标\n- 用户满意度 > 85%\n- 市场占有率提升 20%\n- 竞品对比分析';
-  return makeNode("root", "产品规划", rc, [
-    makeNode("a", "市场洞察", "# 市场洞察\n\n## 核心目标\n用户画像、痛点聚合、需求优先级。\n\n### 研究方法\n通过定性与定量结合形成决策依据。\n\n#### 数据来源\n1. 用户访谈（N=50）\n2. 问卷调查（N=1000）\n3. 行为数据分析\n\n### 关键指标\n- 用户满意度 > 85%\n- 市场占有率提升 20%\n- 竞品对比分析", [
-      makeNode("a1", "用户调研", "# 用户调研计划\n\n## 调研方法\n- 访谈：N=20 深度访谈\n- 问卷：N=300 在线调研\n- 观察：用户行为分析\n\n### 核心发现\n1. **核心诉求**：易用性、性能、价格\n2. **流失原因**：功能缺失、学习成本高\n3. **替代方案偏好**：竞品A、竞品B\n\n### 技术实现\n```javascript\nconst surveyData = {\n  total: 300,\n  completion: 0.85,\n  satisfaction: 4.2\n};\n```\n\n## 下一步行动\n基于调研结果优化产品功能。"),
-      makeNode("a2", "竞品分析", "# 分析维度\n功能覆盖度、定价、渠道、增长机制与差异化定位。", [
-        makeNode("a21", "功能矩阵", "# 功能分类\n必选/可选能力映射，找差距并形成跟进计划。\n\n## 优先级排序\n根据用户价值和实现难度排序。"),
-        makeNode("a22", "价格策略", "# 定价模式\n分层定价（免费/专业/企业），试用期与转化路径设计。\n\n## 价格测试\nA/B测试不同价格点的转化率。"),
-        makeNode("a23", "渠道策略", "# 渠道布局\nSEO、内容、合作、口碑循环，构建可复用增长资产。\n\n## 渠道效果\n跟踪各渠道的获客成本和转化率。")
-      ]),
-    ]),
-    makeNode("b", "路线图", "# 规划原则\n将目标拆解为季度节奏，纳入风险与缓冲，保证节拍不失真。\n\n## 里程碑\n每个季度设定关键里程碑和验收标准。", [
-      makeNode("b1", "Q1", "# 核心目标\nMVP 收敛与首批种子用户小规模试用。\n\n## 关键任务\n产品功能完善、用户反馈收集、数据验证。", [
-        makeNode("b11", "MVP 定义", "# 定义标准\n可用、可测、可增长的最小集合，确保闭环可验证。\n\n## 功能清单\n核心功能列表和优先级排序。"),
-        makeNode("b12", "可用性测试", "# 测试目标\n任务完成率≥80%，主流程<3 步，关键指标显著提升。\n\n## 测试计划\n用户测试流程和评估标准。")
-      ]),
-      makeNode("b2", "Q2", "# 重点方向\n支付/增长闭环，围绕留存打造价值回访。\n\n## 增长策略\n用户获取、激活、留存的全链路优化。", [
-        makeNode("b21", "支付整合", "# 技术方案\nApple/Stripe，订单/退款/对账与税务合规\n\n## 安全考虑\n数据加密、PCI合规、风险控制。")
-      ]),
-      makeNode("b3", "Q3", "# 战略目标\n生态与合作，探索平台化能力与伙伴共赢。\n\n## 合作方向\n技术合作、渠道合作、生态建设。")
-    ]),
-    makeNode("c", "交付与增长", "# 核心策略\n发布、稳定性、飞轮：获取-激活-留存-变现-传播，形成正反馈。\n\n## 关键指标\n用户增长、留存率、收入增长、用户满意度。", [
-      makeNode("c1", "上线准备", "# 发布清单\n发布清单、监控、回滚脚本；预案演练与演习复盘。\n\n## 风险控制\n应急预案、回滚策略、监控告警。"),
-      makeNode("c2", "监控预警", "# 监控体系\nSLA、告警阈值、看板：问题可观测、可定位、可恢复。\n\n## 告警策略\n分级告警、自动恢复、人工介入。"),
-      makeNode("c3", "增长循环", "# 增长引擎\n实验平台与指标体系，快速迭代并持续复盘。\n\n## 数据驱动\n基于数据决策，持续优化产品体验。", [
-        makeNode("c31", "A/B 实验", "# 实验设计\n注册转化、首日留存，样本量与显著性控制。\n\n## 实验流程\n假设提出、实验设计、结果分析、决策执行。"),
-        makeNode("c32", "留存提升", "# 留存策略\n触达/激励/价值回访，基于分层用户画像制定策略。\n\n## 用户分层\n新用户、活跃用户、流失用户的不同策略。")
-      ])
-    ])
-  ]);
-  */
+    // 构建完整的节点树
+    const root = makeNode(rootNode.nodeId, rootNode.title, bodyContent, []);
+    
+    // 递归构建子节点
+    function buildChildren(parentNode, allNodes) {
+      const children = allNodes.filter(node => node.parentId === parentNode.id);
+      parentNode.children = children.map(childNode => {
+        let childBodyContent = [];
+        try {
+          if (childNode.body) {
+            const parsedBody = JSON.parse(childNode.body);
+            if (parsedBody.sections) {
+              childBodyContent = parsedBody.sections;
+            } else {
+              childBodyContent = [{ title: "内容", content: childNode.body }];
+            }
+          }
+        } catch (e) {
+          console.warn('解析子节点body内容失败:', e);
+          childBodyContent = [{ title: "内容", content: childNode.body || "" }];
+        }
+        
+        const childNodeObj = makeNode(childNode.nodeId, childNode.title, childBodyContent, []);
+        buildChildren(childNodeObj, allNodes);
+        return childNodeObj;
+      });
+    }
+    
+    buildChildren(root, nodes);
+    
+    return root;
+    
+  } catch (error) {
+    console.error('获取节点数据失败:', error);
+    return makeNode("error", "数据加载失败", `错误信息: ${error.message}`, []);
+  }
 }
 
 
