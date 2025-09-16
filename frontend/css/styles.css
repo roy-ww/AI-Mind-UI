@@ -49,6 +49,43 @@ svg.dragging { cursor: grabbing; }
 .node-group:hover .node-question-btn { 
   opacity: 1; 
 }
+
+/* Concept高亮样式 */
+.concept-highlight {
+  fill: var(--accent);
+  transition: all 0.3s ease;
+}
+
+.concept-highlight:hover {
+  fill: var(--primary);
+}
+
+.concept-underline {
+  stroke: var(--accent);
+  stroke-width: 2;
+  fill: none;
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  opacity: 0;
+}
+
+.concept-underline.animate {
+  stroke-dashoffset: 0;
+  opacity: 1;
+}
+
+/* 问题节点样式 */
+.question-node {
+  fill: var(--panel);
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 5,5;
+}
+
+.question-title {
+  fill: var(--muted);
+  font-style: italic;
+  font-size: 12px;
+}
 .node-question-btn:hover { 
   fill: var(--accent); 
 }

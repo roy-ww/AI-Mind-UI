@@ -153,12 +153,59 @@ function wrapBodyText(body, innerWidth) {
 }
 
 
-function makeNode(id, title, body = "", children = [], height) {
-  return { id, title, body, children, collapsed: false, width: CONFIG.baseNodeWidth, height: height ?? undefined, x: 0, y: 0, subtreeHeight: 0, _wrappedBodyLines: undefined };
+function makeNode(id, title, body = "", children = [], height, concepts = [], questions = []) {
+  return { id, title, body, children, collapsed: false, width: CONFIG.baseNodeWidth, height: height ?? undefined, x: 0, y: 0, subtreeHeight: 0, _wrappedBodyLines: undefined, concepts, questions };
 }
 
 function generateUniqueId() {
   return 'node_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+// 高亮concepts匹配的文字
+function highlightConcepts(text, concepts) {
+  if (!concepts || concepts.length === 0) {
+    return [{ text, highlighted: false }];
+  }
+  
+  const parts = [];
+  let lastIndex = 0;
+  
+  // 创建正则表达式来匹配所有concepts
+  const conceptPattern = concepts.map(concept => 
+    concept.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // 转义特殊字符
+  ).join('|');
+  
+  const regex = new RegExp(`(${conceptPattern})`, 'gi');
+  let match;
+  
+  while ((match = regex.exec(text)) !== null) {
+    // 添加匹配前的文本
+    if (match.index > lastIndex) {
+      parts.push({
+        text: text.substring(lastIndex, match.index),
+        highlighted: false
+      });
+    }
+    
+    // 添加匹配的文本
+    parts.push({
+      text: match[0],
+      highlighted: true,
+      concept: match[0]
+    });
+    
+    lastIndex = match.index + match[0].length;
+  }
+  
+  // 添加剩余的文本
+  if (lastIndex < text.length) {
+    parts.push({
+      text: text.substring(lastIndex),
+      highlighted: false
+    });
+  }
+  
+  return parts.length > 0 ? parts : [{ text, highlighted: false }];
 }
 
 // 从URL参数获取mindId
@@ -212,6 +259,8 @@ async function buildSampleData() {
     
     // 解析body内容
     let bodyContent = [];
+    let concepts = [];
+    let questions = [];
     try {
       if (rootNode.body) {
         const parsedBody = JSON.parse(rootNode.body);
@@ -220,6 +269,12 @@ async function buildSampleData() {
         } else {
           bodyContent = [{ title: "内容", content: rootNode.body }];
         }
+        if (parsedBody.concepts) {
+          concepts = parsedBody.concepts;
+        }
+        if (parsedBody.questions) {
+          questions = parsedBody.questions;
+        }
       }
     } catch (e) {
       console.warn('解析body内容失败:', e);
@@ -227,13 +282,15 @@ async function buildSampleData() {
     }
 
     // 构建完整的节点树
-    const root = makeNode(rootNode.nodeId, rootNode.title, bodyContent, []);
+    const root = makeNode(rootNode.nodeId, rootNode.title, bodyContent, [], undefined, concepts, questions);
     
     // 递归构建子节点
     function buildChildren(parentNode, allNodes) {
       const children = allNodes.filter(node => node.parentId === parentNode.id);
       parentNode.children = children.map(childNode => {
         let childBodyContent = [];
+        let childConcepts = [];
+        let childQuestions = [];
         try {
           if (childNode.body) {
             const parsedBody = JSON.parse(childNode.body);
@@ -242,19 +299,50 @@ async function buildSampleData() {
             } else {
               childBodyContent = [{ title: "内容", content: childNode.body }];
             }
+            if (parsedBody.concepts) {
+              childConcepts = parsedBody.concepts;
+            }
+            if (parsedBody.questions) {
+              childQuestions = parsedBody.questions;
+            }
           }
         } catch (e) {
           console.warn('解析子节点body内容失败:', e);
           childBodyContent = [{ title: "内容", content: childNode.body || "" }];
         }
         
-        const childNodeObj = makeNode(childNode.nodeId, childNode.title, childBodyContent, []);
+        const childNodeObj = makeNode(childNode.nodeId, childNode.title, childBodyContent, [], undefined, childConcepts, childQuestions);
         buildChildren(childNodeObj, allNodes);
         return childNodeObj;
       });
     }
     
     buildChildren(root, nodes);
+    
+    // 根据questions创建子节点
+    function addQuestionsAsChildren(node) {
+      if (node.questions && node.questions.length > 0) {
+        const questionChildren = node.questions.map((question, index) => {
+          const questionId = `${node.id}_question_${index}`;
+          const questionNode = makeNode(questionId, question, [], [], undefined, [], []);
+          questionNode.isQuestion = true; // 标记为问题节点
+          return questionNode;
+        });
+        
+        // 将questions子节点添加到现有子节点后面
+        if (!node.children) {
+          node.children = [];
+        }
+        node.children = node.children.concat(questionChildren);
+      }
+      
+      // 递归处理所有子节点
+      if (node.children) {
+        node.children.forEach(child => addQuestionsAsChildren(child));
+      }
+    }
+    
+    addQuestionsAsChildren(root);
     
     return root;
     
@@ -342,9 +430,20 @@ function render(svg, root) {
     g.setAttribute("transform", `translate(${n.x}, ${n.y})`);
     g.setAttribute("data-id", n.id);
 
-    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect"); rect.setAttribute("class", "node-rect"); rect.setAttribute("x", "0"); rect.setAttribute("y", "0"); rect.setAttribute("width", String(n.width)); rect.setAttribute("height", String(n.height)); g.appendChild(rect);
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect"); 
+    rect.setAttribute("class", n.isQuestion ? "node-rect question-node" : "node-rect"); 
+    rect.setAttribute("x", "0"); 
+    rect.setAttribute("y", "0"); 
+    rect.setAttribute("width", String(n.width)); 
+    rect.setAttribute("height", String(n.height)); 
+    g.appendChild(rect);
 
-    const title = document.createElementNS("http://www.w3.org/2000/svg", "text"); title.setAttribute("class", "node-title"); title.setAttribute("x", String(CONFIG.nodePaddingX)); title.setAttribute("y", String(CONFIG.nodePaddingY)); title.textContent = n.title || n.label || ""; g.appendChild(title);
+    const title = document.createElementNS("http://www.w3.org/2000/svg", "text"); 
+    title.setAttribute("class", n.isQuestion ? "node-title question-title" : "node-title"); 
+    title.setAttribute("x", String(CONFIG.nodePaddingX)); 
+    title.setAttribute("y", String(CONFIG.nodePaddingY)); 
+    title.textContent = n.title || n.label || ""; 
+    g.appendChild(title);
 
     const innerWidth = Math.max(20, (n.width || CONFIG.baseNodeWidth) - CONFIG.nodePaddingX * 2);
     const wrapped = n._wrappedBodyLines || wrapBodyText(n.body, innerWidth);
@@ -385,8 +484,48 @@ function render(svg, root) {
           displayText = "`" + displayText + "`";
         }
         
-        t.textContent = displayText; 
-        g.appendChild(t); 
+        // 检查是否需要高亮concepts
+        const highlightedParts = highlightConcepts(displayText, n.concepts || []);
+        
+        if (highlightedParts.length === 1 && !highlightedParts[0].highlighted) {
+          // 没有需要高亮的内容，直接显示
+          t.textContent = displayText;
+          g.appendChild(t);
+        } else {
+          // 有需要高亮的内容，创建tspan元素
+          let currentX = CONFIG.nodePaddingX;
+          for (const part of highlightedParts) {
+            const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+            tspan.textContent = part.text;
+            tspan.setAttribute("x", String(currentX));
+            
+            if (part.highlighted) {
+              tspan.setAttribute("class", "concept-highlight");
+              tspan.setAttribute("data-concept", part.concept);
+              
+              // 创建下划线动画元素
+              const textWidth = TextMeasurer.measure(part.text, CONFIG.fontFamily);
+              const underline = document.createElementNS("http://www.w3.org/2000/svg", "line");
+              underline.setAttribute("class", "concept-underline");
+              underline.setAttribute("x1", String(currentX));
+              underline.setAttribute("y1", String(y + CONFIG.bodyLineHeight - 2));
+              underline.setAttribute("x2", String(currentX + textWidth));
+              underline.setAttribute("y2", String(y + CONFIG.bodyLineHeight - 2));
+              underline.setAttribute("data-concept", part.concept);
+              // 设置精确的stroke-dasharray值
+              underline.setAttribute("stroke-dasharray", String(textWidth));
+              underline.setAttribute("stroke-dashoffset", String(textWidth));
+              g.appendChild(underline);
+            }
+            
+            t.appendChild(tspan);
+            
+            // 计算下一个tspan的x位置
+            const textWidth = TextMeasurer.measure(part.text, CONFIG.fontFamily);
+            currentX += textWidth;
+          }
+          g.appendChild(t);
+        } 
         y += CONFIG.bodyLineHeight; 
       } 
     }
@@ -408,6 +547,30 @@ function render(svg, root) {
       relayoutAndRender(svg, root);
     });
     g.appendChild(questionBtn);
+
+    // 添加鼠标悬停事件来触发concept高亮动画
+    g.addEventListener('mouseenter', () => {
+      const conceptUnderlines = g.querySelectorAll('.concept-underline');
+      conceptUnderlines.forEach((underline, index) => {
+        // 为每个下划线添加延迟，创造波浪效果
+        setTimeout(() => {
+          // 重置动画
+          underline.classList.remove('animate');
+          // 使用requestAnimationFrame确保重绘
+          requestAnimationFrame(() => {
+            // 重新开始动画
+            underline.classList.add('animate');
+          });
+        }, index * 80); // 每个下划线延迟80ms
+      });
+    });
+    
+    g.addEventListener('mouseleave', () => {
+      const conceptUnderlines = g.querySelectorAll('.concept-underline');
+      conceptUnderlines.forEach(underline => {
+        underline.classList.remove('animate');
+      });
+    });
 
     gNodes.appendChild(g);
   }
