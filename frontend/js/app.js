@@ -394,7 +394,19 @@ function assignY(node, topY, siblingGap) {
 
 function assignX(node, depth, paddingLeft, baseNodeWidth, levelGap) { node.x = paddingLeft + depth * (baseNodeWidth + levelGap); node.children.forEach(c => assignX(c, depth + 1, paddingLeft, baseNodeWidth, levelGap)); }
 
-function buildLinks(node, links = []) { node.children.forEach(child => { links.push({ x1: node.x + node.width, y1: node.y + node.height / 2, x2: child.x, y2: child.y + child.height / 2 }); buildLinks(child, links); }); return links; }
+function buildLinks(node, links = []) { 
+  node.children.forEach(child => { 
+    links.push({ 
+      x1: node.x + node.width, 
+      y1: node.y + node.height / 2, 
+      x2: child.x, 
+      y2: child.y + child.height / 2,
+      isQuestionLink: child.isQuestion || false // 标记是否为问题连线
+    }); 
+    buildLinks(child, links); 
+  }); 
+  return links; 
+}
 
 function bezierPath({ x1, y1, x2, y2 }) { const dx = Math.max(30, (x2 - x1) * 0.5); const c1x = x1 + dx; const c2x = x2 - dx; return `M ${x1} ${y1} C ${c1x} ${y1}, ${c2x} ${y2}, ${x2} ${y2}`; }
 
@@ -418,7 +430,12 @@ function render(svg, root) {
   gLinks.setAttribute("fill", "none");
   gViewport.appendChild(gLinks);
 
-  for (const l of links) { const path = document.createElementNS("http://www.w3.org/2000/svg", "path"); path.setAttribute("class", "link"); path.setAttribute("d", bezierPath(l)); gLinks.appendChild(path); }
+  for (const l of links) { 
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path"); 
+    path.setAttribute("class", l.isQuestionLink ? "link question-link" : "link"); 
+    path.setAttribute("d", bezierPath(l)); 
+    gLinks.appendChild(path); 
+  }
 
   const gNodes = document.createElementNS("http://www.w3.org/2000/svg", "g");
   gViewport.appendChild(gNodes);

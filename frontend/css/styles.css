@@ -86,6 +86,54 @@ svg.dragging { cursor: grabbing; }
   font-style: italic;
   font-size: 12px;
 }
+
+/* 问题连线样式 */
+.question-link {
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 10,6;
+  stroke-dashoffset: 0;
+  animation: link-dash-flow 4s linear infinite;
+  opacity: 0.7;
+  transition: all 0.4s ease;
+}
+
+.question-link:hover {
+  opacity: 1;
+  stroke: var(--primary);
+  stroke-width: 2;
+  animation-duration: 1.5s;
+}
+
+@keyframes link-dash-flow {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 24;
+  }
+}
+
+/* 为不同的问题连线添加不同的动画延迟 */
+.question-link:nth-of-type(1) {
+  animation-delay: 0s;
+}
+
+.question-link:nth-of-type(2) {
+  animation-delay: 0.8s;
+}
+
+.question-link:nth-of-type(3) {
+  animation-delay: 1.6s;
+}
+
+.question-link:nth-of-type(4) {
+  animation-delay: 2.4s;
+}
+
+.question-link:nth-of-type(5) {
+  animation-delay: 3.2s;
+}
 .node-question-btn:hover { 
   fill: var(--accent); 
 }
