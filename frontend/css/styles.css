@@ -107,10 +107,10 @@ svg.dragging { cursor: grabbing; }
 
 @keyframes link-dash-flow {
   0% {
-    stroke-dashoffset: 0;
+    stroke-dashoffset: 24;
   }
   100% {
-    stroke-dashoffset: 24;
+    stroke-dashoffset: 0;
   }
 }
 

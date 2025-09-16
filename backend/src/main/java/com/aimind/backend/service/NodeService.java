@@ -52,6 +52,25 @@ public class NodeService {
         
         return new NodeResponse(savedNode);
     }
+
+
+    /**
+     * 生成节点
+     */
+    public NodeResponse generateNode(String parentId,String title) {
+        // 生成节点ID
+        String nodeId = UUID.randomUUID().toString();
+        // 根据 parentId 查询 mindid
+        Node parentNode = nodeRepository.findByNodeId(parentId)
+            .orElseThrow(() -> new RuntimeException("父节点不存在: " + parentId));
+        // 生成节点
+        ChatRequest chatRequest = new ChatRequest(title, null);
+        ChatResponse chatResponse = llmService.chat(chatRequest);
+        String bodyString = chatResponse.getContent();
+        Node node = new Node(parentNode.getMindId(),parentId, nodeId, title, bodyString);
+        Node savedNode = nodeRepository.save(node);
+        return new NodeResponse(savedNode);
+    }
     
     /**
      * 创建思维空间（创建根节点）
@@ -132,6 +151,7 @@ public class NodeService {
             .orElseThrow(() -> new RuntimeException("节点不存在: " + id));
         return new NodeResponse(node);
     }
+
     
     /**
      * 根据思维空间ID和节点ID获取节点

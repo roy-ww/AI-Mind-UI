@@ -589,6 +589,14 @@ function render(svg, root) {
       });
     });
 
+    // 为问题节点添加双击事件
+    if (n.isQuestion) {
+      g.addEventListener('dblclick', async (e) => {
+        e.stopPropagation();
+        await handleQuestionNodeDoubleClick(n, root);
+      });
+    }
+
     gNodes.appendChild(g);
   }
 }
@@ -598,6 +606,136 @@ function computeMaxDepth(node, depth = 0) { if (!node.children || node.children.
 function toggleNodeById(root, id) { const node = findNode(root, id); if (!node) return; node.collapsed = !node.collapsed; }
 
 function findNode(node, id) { if (node.id === id) return node; for (const c of node.children) { const found = findNode(c, id); if (found) return found; } return null; }
+
+// 查找节点的父节点
+function findParentNode(root, targetNodeId) {
+  function searchParent(node, targetId) {
+    if (node.children) {
+      for (const child of node.children) {
+        if (child.id === targetId) {
+          return node;
+        }
+        const found = searchParent(child, targetId);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+  return searchParent(root, targetNodeId);
+}
+
+// 处理问题节点双击事件
+async function handleQuestionNodeDoubleClick(questionNode, root) {
+  try {
+    console.log('双击问题节点:', questionNode.title);
+    
+    // 显示加载提示
+    const loadingMsg = document.createElement('div');
+    loadingMsg.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--panel);
+      color: var(--text);
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid var(--node-border);
+      z-index: 1000;
+      font-size: 14px;
+    `;
+    loadingMsg.textContent = '正在生成节点...';
+    document.body.appendChild(loadingMsg);
+    
+    // 查找父节点
+    const parentNode = findParentNode(root, questionNode.id);
+    if (!parentNode) {
+      console.error('未找到父节点');
+      document.body.removeChild(loadingMsg);
+      alert('未找到父节点');
+      return;
+    }
+    
+    console.log('父节点ID:', parentNode.id);
+    
+    // 调用后端API生成新节点
+    const response = await fetch('/nodes/generate-node-by-ai', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        parentId: parentNode.id,
+        title: questionNode.title
+      })
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+    }
+    
+    const newNodeData = await response.json();
+    console.log('新节点创建成功:', newNodeData);
+    
+    // 更新加载提示
+    loadingMsg.textContent = '正在重新加载数据...';
+    
+    // 重新加载数据并渲染
+    await reloadAndRender();
+    
+    // 移除加载提示
+    document.body.removeChild(loadingMsg);
+    
+    // 显示成功提示
+    const successMsg = document.createElement('div');
+    successMsg.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--primary);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      z-index: 1000;
+      font-size: 14px;
+    `;
+    successMsg.textContent = '节点生成成功！';
+    document.body.appendChild(successMsg);
+    
+    // 3秒后移除成功提示
+    setTimeout(() => {
+      if (document.body.contains(successMsg)) {
+        document.body.removeChild(successMsg);
+      }
+    }, 3000);
+    
+  } catch (error) {
+    console.error('处理问题节点双击失败:', error);
+    
+    // 移除加载提示
+    const loadingMsg = document.querySelector('div[style*="position: fixed"]');
+    if (loadingMsg) {
+      document.body.removeChild(loadingMsg);
+    }
+    
+    // 显示错误提示
+    alert('生成节点失败: ' + error.message);
+  }
+}
+
+// 重新加载数据并渲染
+async function reloadAndRender() {
+  try {
+    const newRoot = await buildSampleData();
+    root = deepClone(newRoot);
+    relayoutAndRender(svg, root);
+    console.log('数据重新加载完成');
+  } catch (error) {
+    console.error('重新加载数据失败:', error);
+    alert('重新加载数据失败: ' + error.message);
+  }
+}
 
 function addQuestionNode(root, parentId) {
   const parentNode = findNode(root, parentId);

@@ -32,6 +32,12 @@ public interface NodeRepository extends JpaRepository<Node, Long> {
      */
     @Query("SELECT n FROM Node n WHERE n.mindId = :mindId AND n.parentId IS NULL")
     Optional<Node> findRootNodeByMindId(@Param("mindId") String mindId);
+
+    /**
+     * 根据节点ID查找节点
+     */
+    @Query("SELECT n FROM Node n WHERE n.nodeId = :nodeId")
+    Optional<Node> findByNodeId(String nodeId);
     
     /**
      * 检查节点是否存在

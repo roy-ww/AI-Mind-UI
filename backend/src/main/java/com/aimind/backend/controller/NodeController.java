@@ -2,6 +2,7 @@ package com.aimind.backend.controller;
 
 import com.aimind.backend.dto.CreateNodeRequest;
 import com.aimind.backend.dto.CreateMindSpaceRequest;
+import com.aimind.backend.dto.GenerateNodeRequest;
 import com.aimind.backend.dto.NodeResponse;
 import com.aimind.backend.dto.UpdateNodeRequest;
 import com.aimind.backend.service.NodeService;
@@ -47,6 +48,20 @@ public class NodeController {
             NodeResponse response = nodeService.createMindSpace(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+
+
+    @PostMapping("/generate-node-by-ai")
+    public ResponseEntity<NodeResponse> generateNode(@Valid @RequestBody GenerateNodeRequest request) {
+        try {
+            NodeResponse response = nodeService.generateNode(request.getParentId(), request.getTitle());
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            System.err.println("生成节点失败: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
