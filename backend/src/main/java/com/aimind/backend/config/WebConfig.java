@@ -17,7 +17,7 @@ public class WebConfig implements WebMvcConfigurer {
         String frontendPath = Paths.get(System.getProperty("user.dir"), "..", "frontend").toAbsolutePath().toString();
         
         // 配置静态资源处理，只处理特定的静态文件
-        registry.addResourceHandler("/home.html", "/chat.html", "/admin.html", "/mindmap-demo.html")
+        registry.addResourceHandler("/home.html", "/chat.html", "/admin.html", "/mindmap.html")
                 .addResourceLocations("file:" + frontendPath + "/")
                 .setCachePeriod(0); // 开发环境不缓存
         
@@ -29,6 +29,11 @@ public class WebConfig implements WebMvcConfigurer {
         // 配置JS文件
         registry.addResourceHandler("js/*")
                 .addResourceLocations("file:" + frontendPath + "/js/")
+                .setCachePeriod(0); // 开发环境不缓存
+        
+        // 配置字体文件
+        registry.addResourceHandler("fonts/*")
+                .addResourceLocations("file:" + frontendPath + "/fonts/")
                 .setCachePeriod(0); // 开发环境不缓存
         
         // 配置其他静态资源文件
