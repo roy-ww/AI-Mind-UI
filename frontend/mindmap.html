@@ -14,10 +14,7 @@
   <div class="wrap">
     <header>
       <h1>思维导图布局演示</h1>
-      <div class="meta">横向布局 · 自动折行 · 兄弟最小间隔、父节点垂直居中 · 点击徽标折叠/展开</div>
-      <button id="resetBtn" class="btn" title="重置示例数据">重置</button>
-      <button id="randomBtn" class="btn" title="随机切换若干节点折叠状态">随机折叠/展开</button>
-      <button id="addNodeBtn" class="btn" title="添加子节点">添加子节点</button>
+      <div class="meta">横向布局 · 自动折行 · 兄弟最小间隔、父节点垂直居中 · 点击徽标折叠/展开 · 鼠标滚轮缩放</div>
       <span class="flex-1"></span>
       <button id="zoomOutBtn" class="btn" title="缩小">-</button>
       <button id="zoomResetBtn" class="btn" title="重置缩放">100%</button>
@@ -25,43 +22,10 @@
     </header>
     <div class="stage">
       <svg id="canvas" viewBox="0 0 1200 800" preserveAspectRatio="xMinYMin meet"></svg>
-      <div class="legend">拖拽平移：按住空白区域拖拽；支持缩放（+ / - / 100%）。</div>
+      <div class="legend">拖拽平移：按住空白区域拖拽；缩放：鼠标滚轮或使用 + / - / 100% 按钮。</div>
     </div>
   </div>
 
-  <!-- 添加子节点弹窗 -->
-  <div id="addNodeModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>添加子节点</h2>
-        <span class="close">&times;</span>
-      </div>
-      <div class="modal-body">
-        <form id="addNodeForm">
-          <div class="form-group">
-            <label for="parentNodeId">父节点ID:</label>
-            <input type="text" id="parentNodeId" name="parentNodeId" required>
-          </div>
-          <div class="form-group">
-            <label for="currentNodeId">当前节点ID:</label>
-            <input type="text" id="currentNodeId" name="currentNodeId" required>
-          </div>
-          <div class="form-group">
-            <label for="nodeTitle">节点标题:</label>
-            <input type="text" id="nodeTitle" name="nodeTitle" required>
-          </div>
-          <div class="form-group">
-            <label for="nodeBody">节点正文:</label>
-            <textarea id="nodeBody" name="nodeBody" rows="8" placeholder="支持子标题格式：&#10;# 子标题&#10;段落内容&#10;&#10;## 二级子标题&#10;更多段落内容"></textarea>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" id="cancelBtn">取消</button>
-            <button type="submit" class="btn btn-primary">确认添加</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
 
   <script src="js/app.js"></script>
 </body>

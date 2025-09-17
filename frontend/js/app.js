@@ -2,7 +2,7 @@ const CONFIG = {
   levelGap: 120,
   baseNodeWidth: 420,
   baseNodeHeight: 40,
-  siblingGap: 22,
+  siblingGap: 40, // 增加兄弟节点间距，从22增加到40
   paddingTop: 24,
   paddingLeft: 24,
   nodePaddingX: 12,
@@ -15,35 +15,6 @@ const CONFIG = {
   fontFamily: "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
 };
 
-// 配置Markdown解析器
-if (typeof marked !== 'undefined') {
-  marked.setOptions({
-    highlight: function(code, lang) {
-      if (typeof hljs === 'undefined') {
-        return code;
-      }
-      
-      if (lang && hljs.getLanguage(lang)) {
-        try {
-          return hljs.highlight(code, { language: lang }).value;
-        } catch (err) {
-          console.warn('代码高亮失败:', err);
-          return code;
-        }
-      }
-      try {
-        return hljs.highlightAuto(code).value;
-      } catch (err) {
-        console.warn('自动代码高亮失败:', err);
-        return code;
-      }
-    },
-    breaks: true,
-    gfm: true
-  });
-} else {
-  console.warn('marked.js 未加载，Markdown功能将不可用');
-}
 
 let zoomScale = 1;
 const MIN_ZOOM = 0.5;
@@ -59,6 +30,8 @@ const TextMeasurer = (() => {
   function measure(text, font) { if (font) setFont(font); return ctx.measureText(text).width; }
   return { measure };
 })();
+
+
 
 function isCJK(str) { return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/.test(str); }
 
@@ -380,16 +353,52 @@ function normalize(node) {
 function computeSubtreeHeight(node, siblingGap, leafHeightMode = "self") {
   const children = node.children || [];
   if (children.length === 0) { const leafH = leafHeightMode === "min" ? Math.min(node.height, CONFIG.minCollapsedHeight) : node.height; node.subtreeHeight = leafH; return leafH; }
-  let total = 0; for (let i = 0; i < children.length; i++) { const c = children[i]; computeSubtreeHeight(c, siblingGap, leafHeightMode); total += c.subtreeHeight; }
-  total += siblingGap * (children.length - 1); node.subtreeHeight = Math.max(node.height, total); return node.subtreeHeight;
+  
+  let total = 0; 
+  for (let i = 0; i < children.length; i++) { 
+    const c = children[i]; 
+    computeSubtreeHeight(c, siblingGap, leafHeightMode); 
+    total += c.subtreeHeight;
+    
+    // 添加动态间距（除了最后一个子节点）
+    if (i < children.length - 1) {
+      const dynamicGap = siblingGap + Math.max(0, c.height * 0.1);
+      total += dynamicGap;
+    }
+  }
+  
+  node.subtreeHeight = Math.max(node.height, total); 
+  return node.subtreeHeight;
 }
 
 function assignY(node, topY, siblingGap) {
   const children = node.children || [];
   if (children.length === 0) { node.y = topY + (node.subtreeHeight - node.height) / 2; return; }
-  let childTop = topY; for (let i = 0; i < children.length; i++) { const c = children[i]; assignY(c, childTop, siblingGap); childTop += c.subtreeHeight + siblingGap; }
-  const first = children[0]; const last = children[children.length - 1];
-  const firstCenter = first.y + first.height / 2; const lastCenter = last.y + last.height / 2; const centerY = (firstCenter + lastCenter) / 2; node.y = centerY - node.height / 2;
+  
+  let childTop = topY; 
+  for (let i = 0; i < children.length; i++) { 
+    const c = children[i]; 
+    assignY(c, childTop, siblingGap); 
+    
+    // 计算下一个子节点的起始位置，确保有足够的间距
+    let nextTop = childTop + c.subtreeHeight;
+    
+    // 如果还有下一个子节点，添加间距
+    if (i < children.length - 1) {
+      // 使用动态间距：基础间距 + 当前节点高度的一定比例
+      const dynamicGap = siblingGap + Math.max(0, c.height * 0.1);
+      nextTop += dynamicGap;
+    }
+    
+    childTop = nextTop;
+  }
+  
+  const first = children[0]; 
+  const last = children[children.length - 1];
+  const firstCenter = first.y + first.height / 2; 
+  const lastCenter = last.y + last.height / 2; 
+  const centerY = (firstCenter + lastCenter) / 2; 
+  node.y = centerY - node.height / 2;
 }
 
 function assignX(node, depth, paddingLeft, baseNodeWidth, levelGap) { node.x = paddingLeft + depth * (baseNodeWidth + levelGap); node.children.forEach(c => assignX(c, depth + 1, paddingLeft, baseNodeWidth, levelGap)); }
@@ -551,20 +560,6 @@ function render(svg, root) {
       const badge = document.createElementNS("http://www.w3.org/2000/svg", "text"); badge.setAttribute("class", "node-badge"); badge.setAttribute("x", String(n.width - 8)); badge.setAttribute("y", String(n.height / 2)); badge.setAttribute("text-anchor", "end"); badge.textContent = n.collapsed ? "+" : "−"; badge.addEventListener("click", (e) => { e.stopPropagation(); toggleNodeById(root, n.id); relayoutAndRender(svg, root); }); g.appendChild(badge);
     }
 
-    // 添加追问按钮
-    const questionBtn = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    questionBtn.setAttribute("class", "node-question-btn");
-    questionBtn.setAttribute("x", String(n.width / 2));
-    questionBtn.setAttribute("y", String(n.height - 8));
-    questionBtn.setAttribute("text-anchor", "middle");
-    questionBtn.textContent = "追问";
-    questionBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      addQuestionNode(root, n.id);
-      relayoutAndRender(svg, root);
-    });
-    g.appendChild(questionBtn);
-
     // 添加鼠标悬停事件来触发concept高亮动画
     g.addEventListener('mouseenter', () => {
       const conceptUnderlines = g.querySelectorAll('.concept-underline');
@@ -624,11 +619,10 @@ function findParentNode(root, targetNodeId) {
   return searchParent(root, targetNodeId);
 }
 
-// 处理问题节点双击事件
+// 虚拟问题节点双击事件
 async function handleQuestionNodeDoubleClick(questionNode, root) {
   try {
-    console.log('双击问题节点:', questionNode.title);
-    
+
     // 显示加载提示
     const loadingMsg = document.createElement('div');
     loadingMsg.style.cssText = `
@@ -670,6 +664,7 @@ async function handleQuestionNodeDoubleClick(questionNode, root) {
       })
     });
     
+
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
@@ -790,77 +785,28 @@ function setupPanning(svg) {
 
   function onUp() { if (!isDragging) return; isDragging = false; svg.classList.remove('dragging'); }
 
+  // 鼠标滚轮缩放功能
+  function onWheel(e) {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+    applyZoom(delta);
+  }
+
   svg.addEventListener('mousedown', onDown);
   svg.addEventListener('mousemove', onMove);
   window.addEventListener('mouseup', onUp);
+  svg.addEventListener('wheel', onWheel, { passive: false });
   svg.addEventListener('touchstart', onDown, { passive: true });
   svg.addEventListener('touchmove', onMove, { passive: true });
   window.addEventListener('touchend', onUp);
 }
 
 const svg = document.getElementById("canvas");
-const resetBtn = document.getElementById("resetBtn");
-const randomBtn = document.getElementById("randomBtn");
-const addNodeBtn = document.getElementById("addNodeBtn");
 const zoomInBtn = document.getElementById("zoomInBtn");
 const zoomOutBtn = document.getElementById("zoomOutBtn");
 const zoomResetBtn = document.getElementById("zoomResetBtn");
 
-// 弹窗相关元素
-const addNodeModal = document.getElementById("addNodeModal");
-const addNodeForm = document.getElementById("addNodeForm");
-const cancelBtn = document.getElementById("cancelBtn");
-const closeBtn = document.querySelector(".close");
 
-// 弹窗控制函数
-function openModal() {
-  addNodeModal.style.display = "block";
-  // 清空表单
-  addNodeForm.reset();
-  // 设置默认值
-  document.getElementById("parentNodeId").value = "root";
-  document.getElementById("currentNodeId").value = generateUniqueId();
-  
-  // 更新父节点ID的提示信息
-  updateParentNodeHint();
-}
-
-function updateParentNodeHint() {
-  const parentIdInput = document.getElementById("parentNodeId");
-  const allIds = getAllNodeIds(root);
-  const hint = `可用节点ID: ${allIds.join(", ")}`;
-  parentIdInput.placeholder = hint;
-}
-
-function closeModal() {
-  addNodeModal.style.display = "none";
-}
-
-function addCustomNode(parentId, nodeId, title, body) {
-  const parentNode = findNode(root, parentId);
-  if (!parentNode) {
-    alert("未找到指定的父节点ID: " + parentId);
-    return false;
-  }
-  
-  const newNode = makeNode(nodeId, title, body);
-  
-  if (!parentNode.children) {
-    parentNode.children = [];
-  }
-  parentNode.children.push(newNode);
-  
-  return true;
-}
-
-// 获取所有节点ID列表，用于用户参考
-function getAllNodeIds(node, ids = []) {
-  ids.push(node.id);
-  if (node.children) {
-    node.children.forEach(child => getAllNodeIds(child, ids));
-  }
-  return ids;
-}
 
 // 异步初始化数据
 async function initializeData() {
@@ -871,24 +817,6 @@ async function initializeData() {
   setupPanning(svg);
   
   // 设置事件监听器
-  resetBtn.addEventListener("click", async () => { 
-    original = await buildSampleData();
-    root = deepClone(original); 
-    relayoutAndRender(svg, root); 
-  });
-  
-  randomBtn.addEventListener("click", () => { 
-    const nodes = collect(root, []); 
-    const candidates = nodes.filter(n => (n.children && n.children.length > 0) || n._originalChildren); 
-    const k = Math.max(1, Math.floor(candidates.length * 0.3)); 
-    for (let i = 0; i < k; i++) { 
-      const idx = Math.floor(Math.random() * candidates.length); 
-      candidates[idx].collapsed = !candidates[idx].collapsed; 
-    } 
-    relayoutAndRender(svg, root); 
-  });
-  
-  addNodeBtn.addEventListener("click", openModal);
   zoomInBtn.addEventListener("click", () => applyZoom(+ZOOM_STEP));
   zoomOutBtn.addEventListener("click", () => applyZoom(-ZOOM_STEP));
   zoomResetBtn.addEventListener("click", () => { zoomScale = 1; applyZoom(0); });
@@ -897,42 +825,3 @@ async function initializeData() {
 // 启动初始化
 initializeData();
 
-// 弹窗事件监听器
-closeBtn.addEventListener("click", closeModal);
-cancelBtn.addEventListener("click", closeModal);
-
-// 点击弹窗外部关闭弹窗
-addNodeModal.addEventListener("click", (e) => {
-  if (e.target === addNodeModal) {
-    closeModal();
-  }
-});
-
-// 表单提交处理
-addNodeForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  
-  const formData = new FormData(addNodeForm);
-  const parentId = formData.get("parentNodeId").trim();
-  const nodeId = formData.get("currentNodeId").trim();
-  const title = formData.get("nodeTitle").trim();
-  const body = formData.get("nodeBody").trim();
-  
-  if (!parentId || !nodeId || !title) {
-    alert("请填写所有必填字段");
-    return;
-  }
-  
-  if (addCustomNode(parentId, nodeId, title, body)) {
-    closeModal();
-    relayoutAndRender(svg, root);
-    alert("节点添加成功！");
-  }
-});
-
-// ESC键关闭弹窗
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && addNodeModal.style.display === "block") {
-    closeModal();
-  }
-});
