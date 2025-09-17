@@ -1,15 +1,9 @@
 package com.aimind.backend.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public class CreateMindSpaceRequest {
+public class UpdateMindSpaceRequest {
     
-    @NotBlank(message = "用户ID不能为空")
-    @Size(max = 36, message = "用户ID长度不能超过36个字符")
-    private String uid;
-    
-    @NotBlank(message = "思维空间名称不能为空")
     @Size(max = 255, message = "思维空间名称长度不能超过255个字符")
     private String mindName;
     
@@ -17,24 +11,15 @@ public class CreateMindSpaceRequest {
     private String mindConcepts;
     
     // 默认构造函数
-    public CreateMindSpaceRequest() {}
+    public UpdateMindSpaceRequest() {}
     
     // 带参数的构造函数
-    public CreateMindSpaceRequest(String uid, String mindName, String mindConcepts) {
-        this.uid = uid;
+    public UpdateMindSpaceRequest(String mindName, String mindConcepts) {
         this.mindName = mindName;
         this.mindConcepts = mindConcepts;
     }
     
     // Getters and Setters
-    public String getUid() {
-        return uid;
-    }
-    
-    public void setUid(String uid) {
-        this.uid = uid;
-    }
-    
     public String getMindName() {
         return mindName;
     }
@@ -54,9 +39,8 @@ public class CreateMindSpaceRequest {
     
     @Override
     public String toString() {
-        return "CreateMindSpaceRequest{" +
-                "uid='" + uid + '\'' +
-                ", mindName='" + mindName + '\'' +
+        return "UpdateMindSpaceRequest{" +
+                "mindName='" + mindName + '\'' +
                 ", mindConcepts='" + mindConcepts + '\'' +
                 '}';
     }

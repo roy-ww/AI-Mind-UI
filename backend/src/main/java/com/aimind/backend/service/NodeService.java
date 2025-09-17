@@ -57,6 +57,22 @@ public class NodeService {
     /**
      * 生成节点
      */
+    public Node generateRootNode(String mindId,String title) {
+        // 生成节点ID
+        String nodeId = UUID.randomUUID().toString();
+        
+        // 生成节点
+        ChatRequest chatRequest = new ChatRequest(title, null);
+        ChatResponse chatResponse = llmService.chat(chatRequest);
+        String bodyString = chatResponse.getContent();
+        Node node = new Node(mindId,null, nodeId, title, bodyString);
+        Node savedNode = nodeRepository.save(node);
+        return savedNode;
+    }
+
+    /**
+     * 生成节点
+     */
     public NodeResponse generateNode(String parentId,String title) {
         // 生成节点ID
         String nodeId = UUID.randomUUID().toString();
@@ -87,8 +103,8 @@ public class NodeService {
             mindId, 
             null, 
             rootNodeId, 
-            request.getRootTitle(), 
-            request.getRootBody() != null ? request.getRootBody() : ""
+            request.getMindName(), 
+            ""
         );
         Node savedNode = nodeRepository.save(rootNode);
         
