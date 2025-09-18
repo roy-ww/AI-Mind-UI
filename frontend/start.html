@@ -39,9 +39,6 @@
 
         <!-- Right Side Buttons -->
         <div class="flex items-center gap-4">
-            <button class="px-4 py-2 text-gray-300 hover:text-white transition-colors">
-                定价
-            </button>
             <button id="loginBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
                 登录
             </button>
@@ -154,19 +151,23 @@
             <p class="text-gray-400 text-center mb-8">登录以保存搜索历史和个人设置</p>
 
             <!-- Login Form -->
-            <form class="space-y-4">
+            <form id="loginForm" class="space-y-4">
                 <div>
                     <input 
-                        type="email" 
-                        placeholder="邮箱地址"
+                        type="text" 
+                        id="username"
+                        placeholder="用户名"
                         class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        required
                     >
                 </div>
                 <div>
                     <input 
                         type="password" 
+                        id="password"
                         placeholder="密码"
                         class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        required
                     >
                 </div>
                 <button 
@@ -202,6 +203,16 @@
                 和 
                 <a href="#" class="text-blue-400 hover:underline">隐私政策</a>
             </p>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 right-4 bg-gray-800 text-white px-6 py-4 rounded-lg shadow-lg transform transition-transform duration-300 translate-x-full">
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <span id="toastMessage">登录成功！</span>
         </div>
     </div>
 
@@ -267,6 +278,80 @@
                 closeMenu();
             }
         });
+
+        // Login functionality
+        const loginForm = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+            
+            if (!username || !password) {
+                showToast('请填写用户名和密码', false);
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/users/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    // 登录成功
+                    showToast('登录成功！', true);
+                    // 清空表单
+                    loginForm.reset();
+                    // 延迟关闭模态框
+                    setTimeout(() => {
+                        closeModal();
+                    }, 1500);
+                } else {
+                    // 登录失败
+                    showToast(result.message || '登录失败', false);
+                }
+            } catch (error) {
+                console.error('登录错误:', error);
+                showToast('网络错误，请稍后重试', false);
+            }
+        });
+
+        // Toast notification function
+        function showToast(message, isSuccess) {
+            toastMessage.textContent = message;
+            
+            // 设置样式
+            if (isSuccess) {
+                toast.querySelector('svg').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
+                toast.querySelector('svg').classList.add('text-green-500');
+                toast.querySelector('svg').classList.remove('text-red-500');
+            } else {
+                toast.querySelector('svg').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
+                toast.querySelector('svg').classList.add('text-red-500');
+                toast.querySelector('svg').classList.remove('text-green-500');
+            }
+            
+            // 显示 toast
+            toast.classList.remove('translate-x-full');
+            toast.classList.add('translate-x-0');
+            
+            // 3秒后隐藏
+            setTimeout(() => {
+                toast.classList.remove('translate-x-0');
+                toast.classList.add('translate-x-full');
+            }, 3000);
+        }
     </script>
 </body>
 </html>
