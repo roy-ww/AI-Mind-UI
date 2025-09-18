@@ -17,13 +17,18 @@ public class WebConfig implements WebMvcConfigurer {
         String frontendPath = Paths.get(System.getProperty("user.dir"), "..", "frontend").toAbsolutePath().toString();
         
         // 配置静态资源处理，只处理特定的静态文件
-        registry.addResourceHandler("/home.html", "/chat.html", "/admin.html", "/mindmap.html")
+        registry.addResourceHandler("/start.html","/home.html", "/chat.html", "/admin.html", "/mindmap.html")
                 .addResourceLocations("file:" + frontendPath + "/")
                 .setCachePeriod(0); // 开发环境不缓存
         
         // 配置CSS文件
         registry.addResourceHandler("css/*")
                 .addResourceLocations("file:" + frontendPath + "/css/")
+                .setCachePeriod(0); // 开发环境不缓存
+
+        // 配置img文件
+        registry.addResourceHandler("img/*")
+                .addResourceLocations("file:" + frontendPath + "/img/")
                 .setCachePeriod(0); // 开发环境不缓存
         
         // 配置JS文件

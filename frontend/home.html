@@ -21,7 +21,7 @@
 <div class="flex-1 text-center text-sm">Hello, wei wang</div>
 <div class="flex items-center space-x-4">
 <button class="bg-gray-800 text-gray-300 text-sm px-4 py-2 rounded-full">3 searches left</button>
-<button class="flex items-center space-x-2 bg-gray-800 text-gray-300 text-sm px-4 py-2 rounded-full">
+<button id="profileButton" class="flex items-center space-x-2 bg-gray-800 text-gray-300 text-sm px-4 py-2 rounded-full hover:bg-gray-700 transition-colors">
 <span class="material-icons text-base">account_circle</span>
 <span>Profile</span>
 </button>
@@ -46,14 +46,44 @@
 </main>
 <footer class="w-full p-6">
 <div class="flex justify-center items-end space-x-4 overflow-x-auto pb-4">
-<img alt="Painting of people on a beach" class="w-40 h-24 object-cover rounded-lg transform hover:scale-105 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBg6UnyoUda8yHEH3Z4kB9APDIzqX6OhhK223AbSvYm2kDAnnVIbcA3WUUCbgnj7dVqY7pwIYuJc5T-RZkLML1duzpVAh_aWF5LJDvYZOnrAh2QtqNpLmTI7XHg9okKQu4OPPHt3xrVDxYz-px2xcgD0bZK04Yf7MJ7h9Org6Rich4dfRci-VxKiU1-WzeRUgLH81If_gSupIxJkSdVKYfBj8QxhHfvhWLTyFVIg581dHqaFs-txxp1QNKd0eHx8T8SvaUWNxLt1_UI"/>
-<img alt="Astronaut on the moon" class="w-40 h-24 object-cover rounded-lg transform hover:scale-105 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHRboqpSfmKtQkiI4Kq9OuNOdR8AHVTocq3WwapVlOC9PyWy6MHnHw9J96rPkIkRgRivqqon6tVa3Y1aa96U8AO4BnXZvldcH8zegM4sSjBfdcb2_yCxpBpddYkelIauF_w6h6S0TyCcigM2VAl07lNA5iurwrOurwhCzZvc4pctNJQvkpDW-VefWU6HQF-aiVgD5y7ns5GsgC9sKzZnxCSd2jYVpX44V5iub4JHJFLurgTFrzQu5QlOfC3FktSYZviWempbkBZeHg"/>
-<img alt="Portrait of a woman" class="w-40 h-24 object-cover rounded-lg transform hover:scale-105 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDV6DUsTpK68mmX91jWu9lc18GkG71P5GH2JPzU_s_3BevtklfA-wLeaAvNUcvUmZsOVgvVc55H28pntvZXDRIh_2TnPJtb75RCpWBwIHQgeMIwGuO_5WT5m9eVL8NQDhHkSNNeUOB5vc3I2Hg3VqUzz6LdXJrChMg1Luzk2q6_DQ9gBE5kYH_qpKtCOzZ1pgagVsRkPS_nuXuYg7QhFJBkBtsgLHnWvmThNm7VJ-P-YA3d_W481fAG7WGr7tHHdACyOok8vo2ZTPiI"/>
-<img alt="A large crowd of soldiers" class="w-40 h-24 object-cover rounded-lg transform hover:scale-105 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKmBXZsNYQ3aGIBvc5EEZyyUyuwIDGa1t4XuqbTr9DFrzHLh3tjI3wvEEFdTJy-k4wJrBSR2yBcAuO9MWzZ18nnfKYQV9Q17llQPhSSxCMUuxd82tkgTHyEj4pYJomrmGe9hH9mNCT73dFZ0fTWGH4JouGqOPecxEMcKNrFSoY8QhUgxg4cX217bUufyIw-O570XfPAwtnI51tZqQlnYHlm8MiVlqGYGnQzBj9caO_uB9RBJhNrYu6a_CrbKR28_C0Hpld6UJkHhWK"/>
-<img alt="Painting of a room with people" class="w-40 h-24 object-cover rounded-lg transform hover:scale-105 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCijDAYB5i5WjsTxVJkU7TIMvKo46Lw5BlsM9itwq4qmU-XnNcTfNGPmHBcQYLOsyfHRvAN045NIwgJg9SugC-C1huBB9xdUWYjzU7fJVTfb3pIiZDmnkyeDqH3xUdyy-qR0WZlmun3Pw8eCwpSIedLBR-fFbYwETB4Q8GeyketCnoZlYdRD5PHapXqlPHlkuisll1DrLe8LeQ0e_wZ0sv-zKtKJ5b4apRep-8OgWQ7aAyQo8Fv2IQChOVrBeFhpROSe_Hv8BofFt9Y"/>
-<img alt="Ancient diagram of the solar system" class="w-40 h-24 object-cover rounded-lg transform hover:scale-105 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB70zHi2kbxcihD1tF9sQgim5jlpbW4GCPPld1N0C2sdr2Y0mGuQc5hkO-CMVU6e7MDrhjpMjnqgh0in3uqzOQkcDGMKLPxUkaUWN4Ufk95-3T7Tux6HAYlIvFXY9MEB_SAMr1_1CeB-SwkG80mVRr8wdVscoah0hAo84ow-MqK9g6olayC_Mc2rRwqxo47RSrY3FBvbgRgniB_iwPfy0-DjfDN33MeNOvlS1xIXTCo3cAGWymGTTOBQmTtBXNHdkS14d9rabbKUQDR"/>
+<img alt="Painting of people on a beach" class="w-40 h-24 object-cover rounded-lg transform hover:scale-105 transition-transform duration-300" src="img/beach-people.jpg"/>
+<img alt="Astronaut on the moon" class="w-40 h-24 object-cover rounded-lg transform hover:scale-105 transition-transform duration-300" src="img/astronaut-moon.jpg"/>
+<img alt="Portrait of a woman" class="w-40 h-24 object-cover rounded-lg transform hover:scale-105 transition-transform duration-300" src="img/portrait-woman.jpg"/>
+<img alt="A large crowd of soldiers" class="w-40 h-24 object-cover rounded-lg transform hover:scale-105 transition-transform duration-300" src="img/soldiers-crowd.jpg"/>
+<img alt="Painting of a room with people" class="w-40 h-24 object-cover rounded-lg transform hover:scale-105 transition-transform duration-300" src="img/room-people.jpg"/>
+<img alt="Ancient diagram of the solar system" class="w-40 h-24 object-cover rounded-lg transform hover:scale-105 transition-transform duration-300" src="img/solar-system.jpg"/>
 </div>
 </footer>
+</div>
+
+
+<div class="bg-gray-800 rounded-2xl shadow-lg p-8 max-w-md w-full relative text-white">
+<button class="absolute top-6 right-6 text-gray-400 hover:text-white">
+<span class="material-symbols-outlined">
+                close
+            </span>
+</button>
+<div class="flex justify-center mb-6">
+<div class="bg-white rounded-full p-3">
+<svg class="w-8 h-8 text-gray-800" fill="currentColor" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+<path d="M26.438 13.344c-.75-.313-1.5-.469-2.344-.469-1.5 0-2.813.563-3.938 1.688-1.125 1.125-1.688 2.438-1.688 3.938s.563 2.813 1.688 3.938c1.125 1.125 2.438 1.688 3.938 1.688.844 0 1.594-.156 2.344-.469l.844.938c-1.031.563-2.156.844-3.375.844-1.875 0-3.563-.625-4.875-1.875-1.313-1.25-1.969-2.875-1.969-4.875s.656-3.625 1.969-4.875c1.313-1.25 3-1.875 4.875-1.875 1.219 0 2.344.281 3.375.844l-.844.938zM20 3.125C10.688 3.125 3.125 10.688 3.125 20S10.688 36.875 20 36.875 36.875 29.313 36.875 20 29.313 3.125 20 3.125zm0 31.25c-7.188 0-13.125-5.938-13.125-13.125S12.813 6.875 20 6.875s13.125 5.938 13.125 13.125-5.938 13.125-13.125 13.125z"></path>
+</svg>
+</div>
+</div>
+<h2 class="text-3xl font-bold text-center mb-4">Sign in to Rabbithole</h2>
+<p class="text-gray-400 text-center mb-8">
+            Ask your own questions, keep a history of your conversations, revisit and continue your discussions at any time.
+        </p>
+<button class="w-full bg-white text-gray-800 font-semibold py-3 px-4 rounded-lg flex items-center justify-center hover:bg-gray-100 transition duration-300 ease-in-out">
+<img alt="Google logo" class="w-6 h-6 mr-3" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXwDrIZp0IBIN0v6d1TRcMFLUmSaAjAYMbwGvwJ_6Cijn3Utz80Xbuf43D1mdHQ7nFdG08903mj02ghXkmQ_UwTkt5WFDH5ht5AetwlpejL3_UhFlaOLeAL84I1AMFNse0mCGbAlN8MzOJ_xUkqtiuLmCDJpOm3zl4WyA6NWkvZi9fyyfvw_4mtAsORUoNtd6TZxJTRRYi9fG-lvidod5Pu9Xs5j3DWNF3saCAGApSVTLm_KULH6lXayhshl1SaSgJyo9XDCaZFj4"/>
+            Continue with Google
+        </button>
+<p class="text-xs text-gray-500 text-center mt-6">
+            By using Rabbithole, you agree to our 
+            <a class="underline hover:text-white" href="#">Terms of Service</a> 
+            and 
+            <a class="underline hover:text-white" href="#">Privacy Policy</a>.
+        </p>
 </div>
 
 <script src="js/home-script.js"></script>

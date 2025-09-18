@@ -4,6 +4,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const tipsContainer = document.getElementById('tipsContainer');
     const tipsMessage = document.getElementById('tipsMessage');
     
+    // Modal相关元素
+    const profileButton = document.getElementById('profileButton');
+    const signInModal = document.getElementById('signInModal');
+    const closeModal = document.getElementById('closeModal');
+    const googleSignIn = document.getElementById('googleSignIn');
+    
+    // 调试信息
+    console.log('Profile button:', profileButton);
+    console.log('Sign in modal:', signInModal);
+    console.log('Close modal:', closeModal);
+    console.log('Google sign in:', googleSignIn);
+    
     // 添加回车事件监听器
     mindInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
@@ -65,4 +77,73 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 3000);
         }
     }
+    
+    // Modal功能
+    // 显示模态框
+    function showModal() {
+        console.log('showModal called'); // 调试信息
+        console.log('signInModal element:', signInModal); // 调试信息
+        console.log('Current classes before:', signInModal.className);
+        
+        // 移除hidden类
+        signInModal.classList.remove('hidden');
+        
+        // 强制设置display样式
+        signInModal.style.display = 'flex';
+        signInModal.style.position = 'fixed';
+        signInModal.style.zIndex = '9999';
+        
+        console.log('Current classes after:', signInModal.className);
+        console.log('Computed style display:', window.getComputedStyle(signInModal).display);
+        console.log('Computed style position:', window.getComputedStyle(signInModal).position);
+        console.log('Computed style z-index:', window.getComputedStyle(signInModal).zIndex);
+        
+        document.body.style.overflow = 'hidden'; // 防止背景滚动
+        console.log('Modal should be visible now'); // 调试信息
+    }
+    
+    // 隐藏模态框
+    function hideModal() {
+        signInModal.classList.add('hidden');
+        signInModal.style.display = 'none';
+        document.body.style.overflow = 'auto'; // 恢复背景滚动
+    }
+    
+    // Profile按钮点击事件
+    profileButton.addEventListener('click', function() {
+        console.log('Profile button clicked!'); // 调试信息
+        showModal();
+    });
+    
+    // 关闭按钮点击事件
+    closeModal.addEventListener('click', function() {
+        hideModal();
+    });
+    
+    // 点击模态框背景关闭
+    signInModal.addEventListener('click', function(e) {
+        if (e.target === signInModal) {
+            hideModal();
+        }
+    });
+    
+    // ESC键关闭模态框
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !signInModal.classList.contains('hidden')) {
+            hideModal();
+        }
+    });
+    
+    // Google登录按钮点击事件
+    googleSignIn.addEventListener('click', function() {
+        // 这里可以添加实际的Google登录逻辑
+        console.log('Google登录被点击');
+        showTips('Google登录功能开发中...', 'loading');
+        
+        // 模拟登录过程
+        setTimeout(() => {
+            hideModal();
+            showTips('登录功能开发中，敬请期待！', 'success');
+        }, 2000);
+    });
 });
